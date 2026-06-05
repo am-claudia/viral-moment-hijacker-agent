@@ -1,0 +1,141 @@
+import json
+import anthropic
+from rich.console import Console
+
+from .config import ORCHESTRATOR_MODEL
+from .tools import TOOL_SCHEMAS, execute_tool
+
+MAX_ITERATIONS = 15
+
+
+class ViralMomentHijacker:
+    def __init__(
+        self,
+        brand_name: str,
+        brand_description: str,
+        tone: str,
+        brand_values: str,
+        console: Console,
+    ):
+        self.brand_name = brand_name
+        self.brand_description = brand_description
+        self.tone = tone
+        self.brand_values = brand_values
+        self.console = console
+        self.client = anthropic.Anthropic()
+
+    def _system_prompt(self, industry: str, platform: str) -> str:
+        return f"""You are a viral marketing strategist for {self.brand_name}.
+
+## Brand
+- Name: {self.brand_name}
+- Description: {self.brand_description}
+- Tone: {self.tone}
+- Values: {self.brand_values}
+
+## Mission
+Run a viral moment hijacker campaign on {platform} in the {industry} space. Follow these steps in order:
+
+1. **DISCOVER** — Call `search_viral_trends` to find what's going viral in {industry} right now.
+2. **IDENTIFY** — Pick the best trend for {self.brand_name}, then call `find_influencers` to find 3 creators actively posting about it on {platform}.
+3. **STRATEGIZE** — Choose the brand angle that feels most authentic. If the connection to {self.brand_name} seems forced, pick a different trend.
+4. **PERSONALIZE** — Write a custom DM pitch for each influencer. Reference their specific content. Sound like a real marketing person, not a bot.
+5. **CREATE** — Write a reactive brand post for {platform} in {self.brand_name}'s voice. Match the energy and format of the platform.
+6. **SAVE** — Call `save_campaign_results` with all generated content.
+
+## Quality Rules
+- DMs must be warm, specific, and platform-native. No "I came across your profile" openers.
+- Brand post must fit {platform}'s native format and tone conventions.
+- Authenticity over virality — if the angle feels like a stretch, say so.
+- Maintain tone throughout: {self.tone}."""
+
+    def run_campaign(self, industry: str, platform: str) -> str | None:
+        """Run the full agentic campaign pipeline. Returns the saved file path."""
+        system = self._system_prompt(industry, platform)
+        messages = [
+            {
+                "role": "user",
+                "content": (
+                    f"Launch a viral moment hijacker campaign for {self.brand_name} "
+                    f"in the {industry} space on {platform}. "
+                    f"Start by discovering what's trending right now."
+                ),
+            }
+        ]
+
+        saved_path = None
+
+        for iteration in range(MAX_ITERATIONS):
+            with self.console.status(
+                f"[bold green]Claude is reasoning... (step {iteration + 1})[/bold green]",
+                spinner="dots",
+            ):
+                response = self.client.messages.create(
+                    model=ORCHESTRATOR_MODEL,
+                    max_tokens=8192,
+                    thinking={"type": "adaptive"},
+                    output_config={"effort": "high"},
+                    system=system,
+                    tools=TOOL_SCHEMAS,
+                    messages=messages,
+                )
+
+            # Append full response (includes thinking blocks) to conversation
+            messages.append({"role": "assistant", "content": response.content})
+
+            # Print any visible text Claude emitted this turn
+            for block in response.content:
+                if getattr(block, "type", None) == "text" and block.text.strip():
+                    self.console.print(f"\n[white]{block.text}[/white]")
+
+            if response.stop_reason == "end_turn":
+                break
+
+            if response.stop_reason == "tool_use":
+                tool_results = []
+
+                for block in response.content:
+                    if getattr(block, "type", None) != "tool_use":
+                        continue
+
+                    self.console.print(
+                        f"\n[bold cyan]→ Tool:[/bold cyan] [yellow]{block.name}[/yellow]"
+                    )
+                    # Show a compact preview of the args (skip large nested arrays)
+                    preview = {
+                        k: v
+                        for k, v in block.input.items()
+                        if k != "influencer_pitches"
+                    }
+                    self.console.print(
+                        f"  [dim]{json.dumps(preview, indent=2)[:300]}[/dim]"
+                    )
+
+                    with self.console.status(
+                        f"  Executing {block.name}...", spinner="line"
+                    ):
+                        result = execute_tool(
+                            block.name, block.input, self.brand_name, platform
+                        )
+
+                    # Capture save path so we can display it after the loop
+                    if block.name == "save_campaign_results":
+                        try:
+                            result_data = json.loads(result)
+                            saved_path = result_data.get("saved_to")
+                        except (json.JSONDecodeError, AttributeError):
+                            pass
+
+                    self.console.print(f"  [green]✓ Done[/green]")
+
+                    tool_results.append(
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": block.id,
+                            "content": result,
+                        }
+                    )
+
+                messages.append({"role": "user", "content": tool_results})
+
+        return saved_path

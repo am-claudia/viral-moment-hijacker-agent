@@ -46,11 +46,19 @@ def display_results(saved_path: str, platform: str):
     )
 
     pitches = campaign.get("influencer_pitches", [])
-    console.print(f"\n[green]✓[/green] {len(pitches)} DM pitch(es) generated")
+    console.print(f"\n[green]✓[/green] {len(pitches)} influencer DM pitch(es) generated")
     for p in pitches:
         handle = p.get("handle") or p.get("name", "Unknown")
         followers = p.get("followers", "—")
-        console.print(f"  → [cyan]{handle}[/cyan]  ({followers} followers)")
+        dm = p.get("dm_pitch", "").strip()
+        console.print()
+        console.print(
+            Panel(
+                f"[dim]{handle}  ·  {followers} followers[/dim]\n\n{dm}",
+                title=f"[bold yellow]DM Pitch — {p.get('name', handle)}[/bold yellow]",
+                border_style="yellow",
+            )
+        )
 
     brand_post = campaign.get("brand_post", "")
     if brand_post:
@@ -62,6 +70,25 @@ def display_results(saved_path: str, platform: str):
                 border_style="cyan",
             )
         )
+
+    distribution = campaign.get("distribution", {})
+    social_url = distribution.get("social_post_url")
+    email_subject = distribution.get("customer_email_subject")
+    email_subs = distribution.get("customer_email_subscribers")
+
+    if social_url or email_subject:
+        console.print()
+        console.print("[bold]Distribution[/bold]")
+        if social_url:
+            console.print(
+                f"  [green]✓[/green] Posted to {platform}: [dim cyan]{social_url}[/dim cyan]"
+            )
+        if email_subject:
+            subs_str = f"{email_subs:,} subscribers" if email_subs else "customer list"
+            console.print(
+                f"  [green]✓[/green] Email sent to {subs_str}: "
+                f"[italic]\"{email_subject}\"[/italic]"
+            )
 
 
 def build_parser() -> argparse.ArgumentParser:

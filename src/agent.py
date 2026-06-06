@@ -41,11 +41,15 @@ Run a viral moment hijacker campaign on {platform} in the {industry} space. Foll
 3. **STRATEGIZE** — Choose the brand angle that feels most authentic. If the connection to {self.brand_name} seems forced, pick a different trend.
 4. **PERSONALIZE** — Write a custom DM pitch for each influencer. Reference their specific content. Sound like a real marketing person, not a bot.
 5. **CREATE** — Write a reactive brand post for {platform} in {self.brand_name}'s voice. Match the energy and format of the platform.
-6. **SAVE** — Call `save_campaign_results` with all generated content.
+6. **POST** — Call `post_to_social_media` to publish the brand post on {self.brand_name}'s {platform} account.
+7. **EMAIL** — Write a customer email that connects the viral trend to something actionable for customers. For a meal kit brand, tie the trend to a specific recipe they can select for their next delivery (e.g., "This [trend] recipe is now available — add it to your next kit"). Make the email feel like a friendly heads-up, not a blast. Then call `send_customer_email` to send it.
+8. **SAVE** — Call `save_campaign_results` with all generated content, including the `social_post_url` from step 6, the `customer_email_subject` from step 7, and the `customer_email_subscribers` count from step 7.
 
 ## Quality Rules
 - DMs must be warm, specific, and platform-native. No "I came across your profile" openers.
 - Brand post must fit {platform}'s native format and tone conventions.
+- Customer email subject line must be under 60 characters and make someone want to open it.
+- Customer email body should feel personal — reference the trend, make the product recommendation feel timely, end with one clear action.
 - Authenticity over virality — if the angle feels like a stretch, say so.
 - Maintain tone throughout: {self.tone}."""
 

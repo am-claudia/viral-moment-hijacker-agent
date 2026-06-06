@@ -1,46 +1,184 @@
 # Viral Moment Hijacker
 
-## About
+An AI marketing agent that monitors what's going viral in any industry, identifies relevant creators, writes personalized outreach, publishes a reactive brand post, and emails your customers — all from a single command.
 
-Viral Moment Hijacker is an AI-powered marketing agent that helps brands jump on trending cultural moments before the window closes. Instead of spending hours manually monitoring social media, researching creators, and drafting outreach copy, this agent does it all in a single automated pipeline — in under a minute.
+Built for **Forkly** (a meal kit brand) as a university project on agentic AI systems. Fully general-purpose: swap in any brand, industry, and platform via CLI flags.
 
-The agent was built for **Forkly**, a fictional meal kit brand targeting millennials and Gen Z, as a university project exploring agentic AI systems with tool use. It is designed to be general-purpose: you can point it at any brand, industry, and platform by passing your brand config through the CLI.
+---
 
-### The problem it solves
+## What it does
 
-When something goes viral on TikTok or Instagram, brands have a narrow window to respond authentically before the moment is stale. Most marketing teams miss it because the process is too slow: monitor trends → identify relevant creators → research each one → draft outreach → write a reactive post. By the time that's done, the trend has peaked.
+When a trend blows up on TikTok or Instagram, most brands miss the window because the manual workflow is too slow: monitor trends → find creators → research each one → write outreach → draft a post → notify customers. By the time that's done, the moment is stale.
 
-This agent compresses that entire workflow into one command.
+This agent runs that entire workflow autonomously in one pipeline:
 
-### How it works at a high level
+```
+1. DISCOVER    Searches Google Trends + Reddit for what's going viral in your industry right now
 
-A single Claude Opus 4.8 orchestrator runs as an autonomous agent with access to three tools. It decides on its own when to search for trends, when to look up influencers, and when to save the results — the same way a human strategist would work through the problem step by step. All the creative work (picking the brand angle, writing DMs, drafting the post) happens through Claude's own reasoning, not rigid templates.
+2. IDENTIFY    Finds 3 real creators actively posting about the top trend on your target platform
 
-AI marketing agent that hijacks viral moments for any brand — finds trending topics, discovers relevant influencers, writes personalized DM pitches, and generates a reactive brand post in one automated pipeline.
+3. STRATEGIZE  Picks the brand angle that fits most authentically — flags it if the connection feels forced
+
+4. PERSONALIZE Writes a custom DM pitch for each creator, referencing their specific content and style
+
+5. CREATE      Drafts a reactive brand post in your brand's voice, formatted for the target platform
+
+6. POST        Publishes the brand post to your company's social media account
+
+7. EMAIL       Writes and sends a trend-inspired email to your customer list
+               (for meal kit brands: ties the trend to a recipe customers can add to their next delivery)
+
+8. SAVE        Saves the complete campaign package to output/ as a timestamped JSON file
+```
+
+A single Claude Opus 4.8 orchestrator runs all reasoning steps. It decides on its own when to call each tool — the same way a human strategist would think through the problem. All creative output (brand angle, DM pitches, brand post, customer email) comes from Claude's own reasoning, not rigid templates.
+
+---
+
+## Project structure
+
+```
+viral-moment-hijacker-agent/
+├── main.py              CLI entry point — parses args, runs the agent, displays results
+├── src/
+│   ├── agent.py         Orchestrator — system prompt, agentic loop, tool dispatch logging
+│   ├── tools.py         All tool schemas + implementations (trend search, influencer find, post, email, save)
+│   └── config.py        Model name + API key loader
+├── output/
+│   ├── *.json           One campaign file per run
+│   └── emails/
+│       └── *.txt        Customer email previews
+├── .env                 Your API keys (never commit this)
+├── .env.example         Template showing which keys are needed
+└── requirements.txt     Python dependencies
+```
+
+---
 
 ## Setup
 
-```bash
-# 1. Install dependencies
-pip install -r requirements.txt
+### 1. Check Python version
 
-# 2. Add your API key
-cp .env.example .env
-# Edit .env and paste your ANTHROPIC_API_KEY from console.anthropic.com
+You need Python 3.11 or higher.
+
+```bash
+python --version
 ```
 
-## Usage
+### 2. Install dependencies
 
 ```bash
-# Forkly on TikTok
+pip install -r requirements.txt
+```
+
+This installs: `anthropic`, `python-dotenv`, `rich`, `pytrends`, `praw`, `tweepy`, `apify-client`.
+
+### 3. Create your `.env` file
+
+Copy the template:
+
+```bash
+cp .env.example .env
+```
+
+Then open `.env` and fill in your keys. Instructions for each key are in the next section.
+
+---
+
+## API keys
+
+### Anthropic (required)
+
+The agent is powered by Claude Opus 4.8. Without this key, nothing runs.
+
+1. Go to [console.anthropic.com](https://console.anthropic.com)
+2. Sign in → click **API Keys** in the left sidebar → **Create Key**
+3. Copy the key (starts with `sk-ant-api03-...`)
+4. Paste it in `.env`:
+
+```env
+ANTHROPIC_API_KEY=sk-ant-api03-...
+```
+
+### Reddit (recommended — free, 2 minutes)
+
+Used to find trending posts in your industry. Without it the agent falls back to Google Trends only, which still works but gives less context.
+
+1. Go to [reddit.com/prefs/apps](https://www.reddit.com/prefs/apps) (any Reddit account works)
+2. Scroll down and click **"create another app"**
+3. Fill in:
+   - **Name:** anything (e.g. `ViralAgent`)
+   - **Type:** select **script**
+   - **Redirect URI:** `http://localhost:8080` (required by Reddit, never actually used)
+4. Click **Create app**
+5. In the box that appears:
+   - **Client ID** = the short string directly under the app name
+   - **Client Secret** = the value next to the word "secret"
+6. Paste both into `.env`:
+
+```env
+REDDIT_CLIENT_ID=your_client_id_here
+REDDIT_CLIENT_SECRET=your_client_secret_here
+```
+
+### Apify (required for TikTok influencer finding)
+
+Apify runs the TikTok scraper that finds real creators posting about the trend. The free trial gives $5 in credits — enough for 30–100 runs.
+
+1. Go to [apify.com](https://apify.com) and sign up (free)
+2. Confirm your email, then log in
+3. Click your profile icon (top right) → **Settings** → **Integrations**
+4. Under **Personal API tokens**, click **+ Add new token**
+5. Name it anything, click **Create**, then copy the token (starts with `apify_api_...`)
+6. Paste it into `.env`:
+
+```env
+APIFY_API_TOKEN=apify_api_...
+```
+
+### Twitter/X (optional — skip for most use cases)
+
+The free Twitter API tier does not support tweet search (posting only). Search requires the Basic plan at $100/month. Leave this blank unless you have a paid plan — the agent handles the missing key gracefully and continues without Twitter data.
+
+```env
+TWITTER_BEARER_TOKEN=
+```
+
+### Final `.env` file
+
+```env
+# Required
+ANTHROPIC_API_KEY=sk-ant-api03-...
+
+# Strongly recommended (free)
+REDDIT_CLIENT_ID=xK9mP2qLrT4abc
+REDDIT_CLIENT_SECRET=yZ7nQ1wMvB3xyz
+
+# Required for TikTok influencer finding
+APIFY_API_TOKEN=apify_api_...
+
+# Optional — needs $100/month Twitter Basic plan, leave blank otherwise
+TWITTER_BEARER_TOKEN=
+```
+
+---
+
+## Running the agent
+
+### Forkly (meal kit brand) on TikTok
+
+```bash
 python main.py \
   --industry food \
   --brand-name "Forkly" \
   --brand-description "Fun meal kit brand delivering weekly recipe kits to millennials and Gen Z" \
   --platform TikTok \
   --tone "casual, witty, food-obsessed"
+```
 
-# Any brand on Instagram
+### Fitness brand on Instagram
+
+```bash
 python main.py \
   --industry fitness \
   --brand-name "ActiveWear Co" \
@@ -48,57 +186,230 @@ python main.py \
   --platform Instagram \
   --tone casual \
   --brand-values "sustainability, performance, community"
+```
 
-# B2B on LinkedIn
+### B2B startup on LinkedIn
+
+```bash
 python main.py \
   --industry fintech \
   --brand-name "PayFlow" \
   --brand-description "B2B payment processing startup" \
   --platform LinkedIn \
-  --tone professional
+  --tone professional \
+  --brand-values "transparent, founder-friendly, no hidden fees"
 ```
 
-## What it does
+### All CLI flags
+
+| Flag | Required | Description |
+|---|---|---|
+| `--industry` | Yes | Industry to monitor (e.g. `food`, `fitness`, `beauty`, `fintech`) |
+| `--brand-name` | Yes | Your brand name |
+| `--brand-description` | Yes | One sentence describing the brand |
+| `--platform` | Yes | `TikTok`, `Instagram`, or `LinkedIn` |
+| `--tone` | No | Brand voice, default: `casual` |
+| `--brand-values` | No | Comma-separated values, default: `authentic, creative, community-driven` |
+
+---
+
+## What to expect when it runs
+
+The terminal shows each step as it executes:
 
 ```
-1. DISCOVER   search_viral_trends(industry, timeframe)
-               → returns ranked trending topics with sentiment + opportunity data
+VIRAL MOMENT HIJACKER
+AI-powered trend + influencer marketing agent
 
-2. IDENTIFY   find_influencers(trend, platform, niche)
-               → returns creator profiles: followers, engagement, recent content
+Campaign Configuration
+  Brand:    Forkly
+  Industry: food
+  Platform: TikTok
+  Tone:     casual, witty, food-obsessed
 
-3. STRATEGIZE  Claude reasoning
-               → picks the most authentic brand angle, flags forced ones
+── Starting Pipeline ──────────────────────────────────
 
-4. PERSONALIZE Claude reasoning
-               → writes platform-native DM pitches referencing each creator's actual content
+Claude is reasoning... (step 1)
 
-5. CREATE      Claude reasoning
-               → generates a reactive brand post in the brand's voice
+→ Tool: search_viral_trends
+  { "industry": "food", "timeframe": "last 24 hours" }
+  ✓ Done
 
-6. SAVE        save_campaign_results(campaign_data)
-               → writes full campaign package to output/<brand>_<timestamp>.json
+→ Tool: find_influencers
+  { "trend": "Sourdough Discard Movement", "platform": "TikTok", ... }
+  ✓ Done   ← this step takes ~30 seconds (live TikTok scrape)
+
+Claude is reasoning... (step 3)
+
+→ Tool: post_to_social_media
+  { "platform": "TikTok", "post_content": "POV: you saved your sourdough..." }
+  ✓ Done
+
+→ Tool: send_customer_email
+  { "subject": "Everyone's doing this — and you can cook it 🍜", ... }
+  ✓ Done
+
+→ Tool: save_campaign_results
+  ✓ Done
+
+── Campaign Complete ───────────────────────────────────
+
+✓ Saved to output/campaign_forkly_20260606_092659.json
+
+╔═ Campaign Summary ════════════════════════════════════╗
+║ Sourdough Discard / Zero-Waste Cooking Movement       ║
+║                                                       ║
+║ Brand angle: Extend the 'nothing dies here' energy... ║
+╚═══════════════════════════════════════════════════════╝
+
+✓ 3 influencer DM pitch(es) generated
+
+┌─ DM Pitch — Maya Chen ────────────────────────────────┐
+│ @zero_waste_kitchen  ·  487K followers                │
+│                                                       │
+│ Hi Maya! The '1 batch of discard = 24 pancakes'...    │
+└───────────────────────────────────────────────────────┘
+
+┌─ TikTok Post ─────────────────────────────────────────┐
+│ POV: you saved your sourdough starter from death...   │
+└───────────────────────────────────────────────────────┘
+
+Distribution
+  ✓ Posted to TikTok: https://www.tiktok.com/@brand/video/abc123
+  ✓ Email sent to 14,230 subscribers: "Everyone's doing this — and you can cook it 🍜"
 ```
 
-## Output
+**Total runtime: 2–4 minutes.** Most of the time is the Apify TikTok scrape (~30s) and Claude's reasoning steps.
 
-Each run saves a JSON file to `output/`:
+---
+
+## Output files
+
+### Campaign JSON — `output/campaign_<brand>_<timestamp>.json`
+
+The complete campaign package:
 
 ```json
 {
-  "metadata": { "brand": "Forkly", "platform": "TikTok", "generated_at": "..." },
-  "viral_trend": "Cucumber Salad ASMR",
-  "trend_summary": "...",
-  "brand_angle": "...",
+  "metadata": {
+    "brand": "Forkly",
+    "platform": "TikTok",
+    "generated_at": "2026-06-06T09:26:59"
+  },
+  "viral_trend": "Sourdough Discard / Zero-Waste Cooking Movement",
+  "trend_summary": "Eco-conscious food creators are turning sourdough discard into pancakes...",
+  "brand_angle": "Extend the 'nothing dies here' energy from the sourdough jar to the whole fridge...",
   "influencer_pitches": [
-    { "name": "...", "handle": "@...", "followers": "245K", "dm_pitch": "..." }
+    {
+      "name": "Maya Chen",
+      "handle": "@zero_waste_kitchen",
+      "followers": "487K",
+      "dm_pitch": "Hi Maya! The '1 batch of discard = 24 pancakes' overlay in your latest video..."
+    },
+    {
+      "name": "James Rodriguez",
+      "handle": "@sourdough_sustainability",
+      "followers": "234K",
+      "dm_pitch": "James — 'my starter eats better than I do' is genuinely the funniest sustainability line..."
+    },
+    {
+      "name": "Priya Desai",
+      "handle": "@sustainable_sourdough_stories",
+      "followers": "156K",
+      "dm_pitch": "Hi Priya! Your cardamom-and-saffron discard pancake ritual video was so calming..."
+    }
   ],
-  "brand_post": "..."
+  "brand_post": "POV: you saved your sourdough starter from death but your cilantro has been screaming...",
+  "distribution": {
+    "social_post_url": "https://www.tiktok.com/@brand/video/abc123xyz",
+    "customer_email_subject": "Everyone's doing this — and you can cook it 🍜",
+    "customer_email_subscribers": 14230
+  }
 }
 ```
 
+### Customer email preview — `output/emails/email_<timestamp>.txt`
+
+The full email Claude wrote for your customer list, saved as plain text:
+
+```
+SUBJECT : Everyone's doing this — and you can cook it 🍜
+TREND   : Sourdough Discard / Zero-Waste Cooking Movement
+FEATURE : Zero-Waste Sourdough Pancake Kit
+CTA     : Add to my next kit
+SENT TO : 14,230 subscribers
+
+────────────────────────────────────────────────────────────
+
+Hey [first name],
+
+You've probably seen the sourdough discard videos everywhere this week...
+```
+
+---
+
+## What's real vs. simulated
+
+| Step | Status | Notes |
+|---|---|---|
+| Google Trends data | **Real** | Live data via pytrends |
+| Reddit trending posts | **Real** | Live posts via Reddit API |
+| TikTok influencer profiles | **Real** | Scraped live via Apify |
+| Twitter/X trends | **Skipped** | Requires $100/month paid plan |
+| Claude strategy + DMs + post + email | **Real** | Claude reasons through everything |
+| Publishing to your TikTok/Instagram | **Simulated** | Returns a fake post URL; no account needed |
+| Sending the customer email | **Simulated** | Saves a preview to `output/emails/`; no email provider needed |
+
+The social posting and email sending are simulated because real publishing APIs (Instagram Graph API, TikTok Business API, Klaviyo, Mailchimp) require business account verification that isn't practical for a demo. In production, you'd swap the function bodies in `src/tools.py` for the real API calls — the rest of the pipeline stays identical.
+
+---
+
 ## Architecture
 
-- **Orchestrator**: `claude-opus-4-8` with adaptive thinking + `effort: high`
-- **Data tools**: `claude-haiku-4-5` for realistic mock trend and influencer data
-- **Loop**: manual agentic loop in `src/agent.py` — Claude decides when to call each tool
+```
+main.py  (CLI)
+    │
+    └── ViralMomentHijacker  (src/agent.py)
+            │
+            ├── Orchestrator: claude-opus-4-8
+            │   adaptive thinking, effort: high
+            │   manual agentic loop, max 15 iterations
+            │
+            └── Tools  (src/tools.py)
+                    ├── search_viral_trends()     Google Trends + Reddit + Twitter
+                    ├── find_influencers()         Apify TikTok scraper
+                    ├── post_to_social_media()     Platform publishing API (simulated)
+                    ├── send_customer_email()      Email provider API (simulated)
+                    └── save_campaign_results()    Writes output JSON
+```
+
+**Why claude-opus-4-8 with adaptive thinking?**
+The campaign strategy requires multi-step reasoning: evaluating trend fit, picking a brand angle, personalizing three separate DM pitches, and writing both a platform post and a customer email in the same voice. Adaptive thinking lets Claude decide how deeply to reason about each step rather than using a fixed compute budget.
+
+**Why a manual agentic loop?**
+The manual loop in `agent.py` gives full control to log each tool call in the terminal, inject the brand name into the save tool, and track intermediate results (post URL, email stats) for the final display. The Anthropic tool runner would work too but hides intermediate steps.
+
+**Why simulated posting and email?**
+Real social publishing and email APIs require business accounts, domain verification, and OAuth flows that complicate a demo. The simulated tools generate realistic output (fake post URL, subscriber count, open rate estimate) so the full pipeline can run end-to-end without external accounts.
+
+---
+
+## Troubleshooting
+
+**`APIFY_API_TOKEN not set`**
+Add your Apify token to `.env`. See the API keys section above.
+
+**`REDDIT_CLIENT_ID / REDDIT_CLIENT_SECRET not set`**
+The agent prints a warning and continues using Google Trends only. Add the Reddit keys if you want richer trend data.
+
+**pytrends rate limit error**
+Google Trends blocks rapid repeated requests. Wait 60 seconds and run again.
+
+**`ModuleNotFoundError`**
+Run `pip install -r requirements.txt` — you likely skipped the install step.
+
+**Agent stops mid-run with a billing error**
+Check your Anthropic account balance at [console.anthropic.com](https://console.anthropic.com). Claude Opus 4.8 costs roughly $0.05–0.15 per full campaign run.
+
+**Apify run hangs for more than 2 minutes**
+Apify occasionally has slow cold starts. Cancel and re-run — the second attempt is usually fast.

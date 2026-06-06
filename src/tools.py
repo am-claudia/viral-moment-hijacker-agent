@@ -2,9 +2,6 @@ import json
 import os
 import datetime
 
-import praw
-import tweepy
-from pytrends.request import TrendReq
 from apify_client import ApifyClient
 
 TOOL_SCHEMAS = [
@@ -77,7 +74,8 @@ TOOL_SCHEMAS = [
         "name": "search_viral_trends",
         "description": (
             "Search for what's currently trending and going viral in a specific industry. "
-            "Returns ranked trending topics with engagement data, sentiment, and opportunity scores."
+            "Scrapes real live data from the target platform (TikTok, Instagram, or LinkedIn) via Apify. "
+            "Returns trending hashtags and topics with real engagement data from top posts."
         ),
         "input_schema": {
             "type": "object",
@@ -188,16 +186,7 @@ TOOL_SCHEMAS = [
 ]
 
 
-# Maps the tool's timeframe enum to each API's native format
-_TIMEFRAME = {
-    "last 24 hours": {"pytrends": "now 1-d",  "reddit": "day"},
-    "last 48 hours": {"pytrends": "now 2-d",  "reddit": "week"},
-    "this week":     {"pytrends": "now 7-d",  "reddit": "week"},
-}
-
-
 def _fmt(n: int) -> str:
-    """Turn a raw integer into a readable count (1.2M, 245K, etc.)."""
     if n >= 1_000_000:
         return f"{n / 1_000_000:.1f}M"
     if n >= 1_000:
@@ -205,99 +194,114 @@ def _fmt(n: int) -> str:
     return str(n)
 
 
-# ── Google Trends ─────────────────────────────────────────────────────────────
+def _apify_client() -> ApifyClient:
+    token = os.environ.get("APIFY_API_TOKEN")
+    if not token:
+        raise ValueError("APIFY_API_TOKEN not set in .env")
+    return ApifyClient(token)
 
-def _google_trends(industry: str, timeframe: str) -> list:
-    try:
-        pt_tf = _TIMEFRAME.get(timeframe, {}).get("pytrends", "now 1-d")
-        pytrends = TrendReq(hl="en-US", tz=360)
 
-        pytrends.build_payload([industry], timeframe=pt_tf)
-        related = pytrends.related_queries()
+# ── Platform trend scrapers ───────────────────────────────────────────────────
 
-        results = []
-        top = related.get(industry, {}).get("top")
-        if top is not None and not top.empty:
-            for _, row in top.head(5).iterrows():
-                results.append({
-                    "trend": row["query"],
-                    "relevance_score": int(row["value"]),
-                    "source": "google_trends",
+def _tiktok_trends(industry: str, count: int = 10) -> list:
+    client = _apify_client()
+    keyword = industry.lower().replace(" ", "")
+
+    run = client.actor("clockworks/tiktok-scraper").call(run_input={
+        "hashtags": [keyword],
+        "resultsPerPage": count * 4,
+        "shouldDownloadVideos": False,
+        "shouldDownloadCovers": False,
+    })
+    items = list(client.dataset(run.default_dataset_id).iterate_items())
+
+    top = sorted(items, key=lambda x: x.get("playCount", 0), reverse=True)[:count * 2]
+
+    seen = set()
+    trends = []
+    for item in top:
+        text = item.get("text", "") or ""
+        tags = [w.lstrip("#") for w in text.split() if w.startswith("#") and len(w) > 1]
+        for tag in tags:
+            if tag.lower() not in seen and tag.lower() != keyword:
+                seen.add(tag.lower())
+                trends.append({
+                    "trend": f"#{tag}",
+                    "source": "tiktok",
+                    "top_video_views": _fmt(item.get("playCount", 0)),
+                    "top_video_likes": _fmt(item.get("diggCount", 0)),
+                    "sample_caption": text[:200],
                 })
+        if len(trends) >= count:
+            break
 
-        # Also pull US real-time trending searches and filter by industry keyword
-        trending = pytrends.trending_searches(pn="united_states")
-        for term in trending[0].head(20).tolist():
-            if any(kw in term.lower() for kw in industry.lower().split()):
-                results.append({"trend": term, "relevance_score": 100, "source": "google_trends_realtime"})
-
-        return results
-    except Exception as e:
-        return [{"error": f"Google Trends: {e}"}]
+    return trends[:count]
 
 
-# ── Reddit ────────────────────────────────────────────────────────────────────
+def _instagram_trends(industry: str, count: int = 10) -> list:
+    # Actor docs: apify.com/apify/instagram-hashtag-scraper/input-schema
+    client = _apify_client()
+    keyword = industry.lower().replace(" ", "")
 
-def _reddit_trends(industry: str, timeframe: str) -> list:
-    client_id = os.environ.get("REDDIT_CLIENT_ID")
-    client_secret = os.environ.get("REDDIT_CLIENT_SECRET")
-    if not client_id or not client_secret:
-        return [{"error": "REDDIT_CLIENT_ID / REDDIT_CLIENT_SECRET not set in .env"}]
+    run = client.actor("apify/instagram-hashtag-scraper").call(run_input={
+        "hashtags": [keyword],
+        "resultsLimit": count * 3,
+        "resultsType": "posts",
+    })
+    items = list(client.dataset(run.default_dataset_id).iterate_items())
 
-    try:
-        reddit = praw.Reddit(
-            client_id=client_id,
-            client_secret=client_secret,
-            user_agent="ViralMomentHijacker/1.0",
-        )
-        time_filter = _TIMEFRAME.get(timeframe, {}).get("reddit", "day")
-        results = []
-        for post in reddit.subreddit("all").search(
-            query=industry, sort="hot", time_filter=time_filter, limit=15
-        ):
-            results.append({
-                "trend": post.title,
-                "subreddit": f"r/{post.subreddit.display_name}",
-                "score": post.score,
-                "comments": post.num_comments,
-                "url": post.url,
-                "source": "reddit",
-            })
-        return results
-    except Exception as e:
-        return [{"error": f"Reddit: {e}"}]
+    top = sorted(items, key=lambda x: x.get("likesCount", 0), reverse=True)[:count * 2]
 
-
-# ── Twitter/X ─────────────────────────────────────────────────────────────────
-
-def _twitter_trends(industry: str) -> list:
-    bearer_token = os.environ.get("TWITTER_BEARER_TOKEN")
-    if not bearer_token:
-        return [{"error": "TWITTER_BEARER_TOKEN not set in .env — skipping Twitter"}]
-
-    try:
-        client = tweepy.Client(bearer_token=bearer_token, wait_on_rate_limit=False)
-        response = client.search_recent_tweets(
-            query=f"{industry} -is:retweet lang:en",
-            max_results=10,
-            tweet_fields=["public_metrics", "created_at"],
-            sort_order="relevancy",
-        )
-        results = []
-        if response.data:
-            for tweet in response.data:
-                m = tweet.public_metrics
-                results.append({
-                    "text": tweet.text[:280],
-                    "likes": m["like_count"],
-                    "retweets": m["retweet_count"],
-                    "source": "twitter",
+    seen = set()
+    trends = []
+    for item in top:
+        caption = item.get("caption", "") or ""
+        tags = [w.lstrip("#") for w in caption.split() if w.startswith("#") and len(w) > 1]
+        for tag in tags:
+            if tag.lower() not in seen and tag.lower() != keyword:
+                seen.add(tag.lower())
+                trends.append({
+                    "trend": f"#{tag}",
+                    "source": "instagram",
+                    "top_post_likes": _fmt(item.get("likesCount", 0)),
+                    "top_post_comments": _fmt(item.get("commentsCount", 0)),
+                    "sample_caption": caption[:200],
                 })
-        return results
-    except tweepy.errors.Forbidden:
-        return [{"error": "Twitter free tier does not support search. Needs Basic plan ($100/month)."}]
-    except Exception as e:
-        return [{"error": f"Twitter: {e}"}]
+        if len(trends) >= count:
+            break
+
+    return trends[:count]
+
+
+def _linkedin_trends(industry: str, count: int = 10) -> list:
+    # Actor docs: apify.com/scarletapi/linkedin-viral-posts-finder
+    client = _apify_client()
+
+    run = client.actor("scarletapi/linkedin-viral-posts-finder").call(run_input={
+        "keywords": [industry],
+        "maxResults": count * 2,
+    })
+    items = list(client.dataset(run.default_dataset_id).iterate_items())
+
+    trends = []
+    for item in items[:count]:
+        text = item.get("text", "") or item.get("content", "") or ""
+        trends.append({
+            "trend": text[:100].split("\n")[0].strip(),
+            "source": "linkedin",
+            "reactions": _fmt(item.get("reactionsCount", 0) or item.get("reactions", 0)),
+            "comments": _fmt(item.get("commentsCount", 0) or item.get("comments", 0)),
+            "sample_post": text[:300],
+        })
+
+    return trends
+
+
+_PLATFORM_TRENDS = {
+    "TikTok": _tiktok_trends,
+    "Instagram": _instagram_trends,
+    "LinkedIn": _linkedin_trends,
+}
 
 
 # ── Apify TikTok ──────────────────────────────────────────────────────────────
@@ -317,7 +321,7 @@ def _apify_tiktok(trend: str, count: int) -> list:
         "shouldDownloadCovers": False,
     })
 
-    items = list(client.dataset(run["defaultDatasetId"]).iterate_items())
+    items = list(client.dataset(run.default_dataset_id).iterate_items())
 
     seen = set()
     creators = []
@@ -422,16 +426,19 @@ def send_customer_email(
     })
 
 
-def search_viral_trends(industry: str, timeframe: str) -> str:
-    """Fetch real trend data from Google Trends, Reddit, and Twitter."""
+def search_viral_trends(industry: str, timeframe: str, platform: str = "TikTok") -> str:
+    """Scrape real trending content for the target platform via Apify."""
+    scraper = _PLATFORM_TRENDS.get(platform, _tiktok_trends)
+    try:
+        trends = scraper(industry, count=10)
+    except Exception as e:
+        return json.dumps({"error": str(e), "platform": platform, "industry": industry})
+
     return json.dumps({
         "industry": industry,
+        "platform": platform,
         "timeframe": timeframe,
-        "sources": {
-            "google_trends": _google_trends(industry, timeframe),
-            "reddit": _reddit_trends(industry, timeframe),
-            "twitter": _twitter_trends(industry),
-        },
+        "trends": trends,
     }, ensure_ascii=False)
 
 
@@ -499,6 +506,7 @@ def execute_tool(tool_name: str, tool_input: dict, brand_name: str, platform: st
         return search_viral_trends(
             industry=tool_input["industry"],
             timeframe=tool_input.get("timeframe", "last 24 hours"),
+            platform=platform,
         )
 
     if tool_name == "find_influencers":

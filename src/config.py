@@ -1,7 +1,6 @@
 import os
 
 ORCHESTRATOR_MODEL = "claude-opus-4-8"
-DATA_MODEL = "claude-haiku-4-5-20251001"
 
 def get_api_key() -> str:
     key = os.environ.get("ANTHROPIC_API_KEY")

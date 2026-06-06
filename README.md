@@ -13,9 +13,10 @@ When a trend blows up on TikTok or Instagram, most brands miss the window becaus
 This agent runs that entire workflow autonomously in one pipeline:
 
 ```
-1. DISCOVER    Searches Google Trends + Reddit for what's going viral in your industry right now
+1. DISCOVER    Scrapes live trending content from your target platform via Apify
+               (TikTok scraper, Instagram Hashtag Scraper, or LinkedIn Viral Posts Finder)
 
-2. IDENTIFY    Finds 3 real creators actively posting about the top trend on your target platform
+2. IDENTIFY    Finds 3 real creators actively posting about the top trend on that platform
 
 3. STRATEGIZE  Picks the brand angle that fits most authentically — flags it if the connection feels forced
 
@@ -71,7 +72,7 @@ python --version
 pip install -r requirements.txt
 ```
 
-This installs: `anthropic`, `python-dotenv`, `rich`, `pytrends`, `praw`, `tweepy`, `apify-client`.
+This installs: `anthropic`, `python-dotenv`, `rich`, `apify-client`.
 
 ### 3. Create your `.env` file
 
@@ -100,30 +101,9 @@ The agent is powered by Claude Opus 4.8. Without this key, nothing runs.
 ANTHROPIC_API_KEY=sk-ant-api03-...
 ```
 
-### Reddit (recommended — free, 2 minutes)
+### Apify (required)
 
-Used to find trending posts in your industry. Without it the agent falls back to Google Trends only, which still works but gives less context.
-
-1. Go to [reddit.com/prefs/apps](https://www.reddit.com/prefs/apps) (any Reddit account works)
-2. Scroll down and click **"create another app"**
-3. Fill in:
-   - **Name:** anything (e.g. `ViralAgent`)
-   - **Type:** select **script**
-   - **Redirect URI:** `http://localhost:8080` (required by Reddit, never actually used)
-4. Click **Create app**
-5. In the box that appears:
-   - **Client ID** = the short string directly under the app name
-   - **Client Secret** = the value next to the word "secret"
-6. Paste both into `.env`:
-
-```env
-REDDIT_CLIENT_ID=your_client_id_here
-REDDIT_CLIENT_SECRET=your_client_secret_here
-```
-
-### Apify (required for TikTok influencer finding)
-
-Apify runs the TikTok scraper that finds real creators posting about the trend. The free trial gives $5 in credits — enough for 30–100 runs.
+Apify powers both trend discovery and influencer finding. It scrapes live data from TikTok, Instagram, or LinkedIn depending on the platform you choose. The free tier gives $5 in credits — enough for many runs.
 
 1. Go to [apify.com](https://apify.com) and sign up (free)
 2. Confirm your email, then log in
@@ -136,30 +116,14 @@ Apify runs the TikTok scraper that finds real creators posting about the trend. 
 APIFY_API_TOKEN=apify_api_...
 ```
 
-### Twitter/X (optional — skip for most use cases)
-
-The free Twitter API tier does not support tweet search (posting only). Search requires the Basic plan at $100/month. Leave this blank unless you have a paid plan — the agent handles the missing key gracefully and continues without Twitter data.
-
-```env
-TWITTER_BEARER_TOKEN=
-```
-
 ### Final `.env` file
 
 ```env
-# Required
 ANTHROPIC_API_KEY=sk-ant-api03-...
-
-# Strongly recommended (free)
-REDDIT_CLIENT_ID=xK9mP2qLrT4abc
-REDDIT_CLIENT_SECRET=yZ7nQ1wMvB3xyz
-
-# Required for TikTok influencer finding
 APIFY_API_TOKEN=apify_api_...
-
-# Optional — needs $100/month Twitter Basic plan, leave blank otherwise
-TWITTER_BEARER_TOKEN=
 ```
+
+That's it — two keys and the agent is fully operational.
 
 ---
 
@@ -233,11 +197,11 @@ Claude is reasoning... (step 1)
 
 → Tool: search_viral_trends
   { "industry": "food", "timeframe": "last 24 hours" }
-  ✓ Done
+  ✓ Done   ← scrapes live TikTok data via Apify
 
 → Tool: find_influencers
   { "trend": "Sourdough Discard Movement", "platform": "TikTok", ... }
-  ✓ Done   ← this step takes ~30 seconds (live TikTok scrape)
+  ✓ Done   ← live TikTok scrape, ~30 seconds
 
 Claude is reasoning... (step 3)
 
@@ -255,31 +219,9 @@ Claude is reasoning... (step 3)
 ── Campaign Complete ───────────────────────────────────
 
 ✓ Saved to output/campaign_forkly_20260606_092659.json
-
-╔═ Campaign Summary ════════════════════════════════════╗
-║ Sourdough Discard / Zero-Waste Cooking Movement       ║
-║                                                       ║
-║ Brand angle: Extend the 'nothing dies here' energy... ║
-╚═══════════════════════════════════════════════════════╝
-
-✓ 3 influencer DM pitch(es) generated
-
-┌─ DM Pitch — Maya Chen ────────────────────────────────┐
-│ @zero_waste_kitchen  ·  487K followers                │
-│                                                       │
-│ Hi Maya! The '1 batch of discard = 24 pancakes'...    │
-└───────────────────────────────────────────────────────┘
-
-┌─ TikTok Post ─────────────────────────────────────────┐
-│ POV: you saved your sourdough starter from death...   │
-└───────────────────────────────────────────────────────┘
-
-Distribution
-  ✓ Posted to TikTok: https://www.tiktok.com/@brand/video/abc123
-  ✓ Email sent to 14,230 subscribers: "Everyone's doing this — and you can cook it 🍜"
 ```
 
-**Total runtime: 2–4 minutes.** Most of the time is the Apify TikTok scrape (~30s) and Claude's reasoning steps.
+**Total runtime: 2–4 minutes.** Most of the time is the Apify scraping steps (~30s each) and Claude's reasoning.
 
 ---
 
@@ -305,18 +247,6 @@ The complete campaign package:
       "handle": "@zero_waste_kitchen",
       "followers": "487K",
       "dm_pitch": "Hi Maya! The '1 batch of discard = 24 pancakes' overlay in your latest video..."
-    },
-    {
-      "name": "James Rodriguez",
-      "handle": "@sourdough_sustainability",
-      "followers": "234K",
-      "dm_pitch": "James — 'my starter eats better than I do' is genuinely the funniest sustainability line..."
-    },
-    {
-      "name": "Priya Desai",
-      "handle": "@sustainable_sourdough_stories",
-      "followers": "156K",
-      "dm_pitch": "Hi Priya! Your cardamom-and-saffron discard pancake ritual video was so calming..."
     }
   ],
   "brand_post": "POV: you saved your sourdough starter from death but your cilantro has been screaming...",
@@ -330,21 +260,7 @@ The complete campaign package:
 
 ### Customer email preview — `output/emails/email_<timestamp>.txt`
 
-The full email Claude wrote for your customer list, saved as plain text:
-
-```
-SUBJECT : Everyone's doing this — and you can cook it 🍜
-TREND   : Sourdough Discard / Zero-Waste Cooking Movement
-FEATURE : Zero-Waste Sourdough Pancake Kit
-CTA     : Add to my next kit
-SENT TO : 14,230 subscribers
-
-────────────────────────────────────────────────────────────
-
-Hey [first name],
-
-You've probably seen the sourdough discard videos everywhere this week...
-```
+The full email Claude wrote for your customer list, saved as plain text.
 
 ---
 
@@ -352,10 +268,8 @@ You've probably seen the sourdough discard videos everywhere this week...
 
 | Step | Status | Notes |
 |---|---|---|
-| Google Trends data | **Real** | Live data via pytrends |
-| Reddit trending posts | **Real** | Live posts via Reddit API |
-| TikTok influencer profiles | **Real** | Scraped live via Apify |
-| Twitter/X trends | **Skipped** | Requires $100/month paid plan |
+| Trend discovery | **Real** | Live data scraped from TikTok / Instagram / LinkedIn via Apify |
+| Influencer profiles | **Real** | Scraped live via Apify TikTok scraper |
 | Claude strategy + DMs + post + email | **Real** | Claude reasons through everything |
 | Publishing to your TikTok/Instagram | **Simulated** | Returns a fake post URL; no account needed |
 | Sending the customer email | **Simulated** | Saves a preview to `output/emails/`; no email provider needed |
@@ -376,8 +290,11 @@ main.py  (CLI)
             │   manual agentic loop, max 15 iterations
             │
             └── Tools  (src/tools.py)
-                    ├── search_viral_trends()     Google Trends + Reddit + Twitter
-                    ├── find_influencers()         Apify TikTok scraper
+                    ├── search_viral_trends()     Apify — platform-specific trend scraper
+                    │                             TikTok → clockworks/tiktok-scraper
+                    │                             Instagram → apify/instagram-hashtag-scraper
+                    │                             LinkedIn → scarletapi/linkedin-viral-posts-finder
+                    ├── find_influencers()         Apify — clockworks/tiktok-scraper
                     ├── post_to_social_media()     Platform publishing API (simulated)
                     ├── send_customer_email()      Email provider API (simulated)
                     └── save_campaign_results()    Writes output JSON
@@ -398,12 +315,6 @@ Real social publishing and email APIs require business accounts, domain verifica
 
 **`APIFY_API_TOKEN not set`**
 Add your Apify token to `.env`. See the API keys section above.
-
-**`REDDIT_CLIENT_ID / REDDIT_CLIENT_SECRET not set`**
-The agent prints a warning and continues using Google Trends only. Add the Reddit keys if you want richer trend data.
-
-**pytrends rate limit error**
-Google Trends blocks rapid repeated requests. Wait 60 seconds and run again.
 
 **`ModuleNotFoundError`**
 Run `pip install -r requirements.txt` — you likely skipped the install step.

@@ -7,7 +7,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.rule import Rule
 
-load_dotenv()
+load_dotenv(override=True)
 
 from src.agent import ViralMomentHijacker  # noqa: E402 — must load .env first
 
@@ -70,6 +70,48 @@ def display_results(saved_path: str, platform: str):
                 border_style="cyan",
             )
         )
+
+    hashtags = campaign.get("hashtag_strategy", {})
+    # Claude may save groups flat or nested under "groups"
+    groups = hashtags.get("groups") or hashtags
+    if groups.get("broad") or groups.get("niche"):
+        console.print()
+        formula = hashtags.get("caption_formula", "")
+        lines = []
+        if groups.get("broad"):
+            lines.append(f"[bold]Broad:[/bold]  {' '.join(groups['broad'])}")
+        if groups.get("niche"):
+            lines.append(f"[bold]Niche:[/bold]  {' '.join(groups['niche'])}")
+        if groups.get("branded"):
+            lines.append(f"[bold]Brand:[/bold]  {' '.join(groups['branded'])}")
+        if groups.get("trend"):
+            lines.append(f"[bold]Trend:[/bold]  {' '.join(groups['trend'])}")
+        if formula:
+            lines.append(f"\n[dim]{formula}[/dim]")
+        console.print(Panel(
+            "\n".join(lines),
+            title="[bold cyan]Hashtag Strategy[/bold cyan]",
+            border_style="cyan",
+        ))
+
+    calendar = campaign.get("content_calendar", [])
+    if calendar:
+        console.print()
+        cal_lines = []
+        for entry in calendar:
+            day = entry.get("day", "")
+            fmt = entry.get("format", "")
+            time = entry.get("optimal_time", "")
+            caption = entry.get("caption", "").replace("\n", " ")[:100]
+            cal_lines.append(
+                f"[bold]{day:<10}[/bold] [yellow]{fmt:<12}[/yellow] "
+                f"[dim]{time:<8}[/dim]  {caption}{'…' if len(entry.get('caption','')) > 100 else ''}"
+            )
+        console.print(Panel(
+            "\n".join(cal_lines),
+            title="[bold green]7-Day Content Calendar[/bold green]",
+            border_style="green",
+        ))
 
     distribution = campaign.get("distribution", {})
     social_url = distribution.get("social_post_url")

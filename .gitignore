@@ -14,9 +14,11 @@ env/
 dist/
 build/
 
-# Output files — campaign JSONs and email previews contain generated content
-output/*.json
+# Output files — generated content, never commit
+output/campaigns/
 output/emails/
+output/calendars/
+output/hashtags/
 
 # OS
 .DS_Store

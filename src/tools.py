@@ -125,6 +125,74 @@ TOOL_SCHEMAS = [
         }
     },
     {
+        "name": "generate_content_calendar",
+        "description": (
+            "Save a 7-day content calendar built around the viral trend. "
+            "Call this after choosing the brand angle and before saving final results. "
+            "Claude provides the full calendar — this tool formats and saves it."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "days": {
+                    "type": "array",
+                    "description": "7 days of planned content",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "day": {"type": "string", "description": "Day name e.g. Monday"},
+                            "format": {"type": "string", "description": "Post format: Reel, Story, Carousel, Feed Post, TikTok, LinkedIn Article"},
+                            "caption": {"type": "string", "description": "Full caption for the post"},
+                            "optimal_time": {"type": "string", "description": "Best time to post e.g. 6:00 PM"}
+                        },
+                        "required": ["day", "format", "caption", "optimal_time"]
+                    },
+                    "minItems": 7,
+                    "maxItems": 7
+                }
+            },
+            "required": ["days"]
+        }
+    },
+    {
+        "name": "generate_hashtag_strategy",
+        "description": (
+            "Generate a grouped hashtag strategy for the campaign. "
+            "Call this after identifying the trend and platform. "
+            "Claude provides the hashtags — this tool formats and returns them ready to use."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "broad": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "3-5 high-volume hashtags (1M+ posts) for reach e.g. #food #cooking"
+                },
+                "niche": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "4-6 mid-size hashtags (10K-500K posts) for targeted engagement e.g. #mealkit #homecooking"
+                },
+                "branded": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "1-2 brand-owned hashtags e.g. #Forkly #ForklyFresh"
+                },
+                "trend": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "3-5 trend-specific hashtags tied to the viral moment e.g. #spammusubi #koreanfood"
+                },
+                "caption_formula": {
+                    "type": "string",
+                    "description": "One-sentence guide on how to combine these groups per post"
+                }
+            },
+            "required": ["broad", "niche", "branded", "trend", "caption_formula"]
+        }
+    },
+    {
         "name": "save_campaign_results",
         "description": (
             "Save the complete campaign package to disk. "
@@ -178,6 +246,15 @@ TOOL_SCHEMAS = [
                 "customer_email_subscribers": {
                     "type": "integer",
                     "description": "Number of subscribers the email was sent to"
+                },
+                "content_calendar": {
+                    "type": "array",
+                    "description": "7-day content calendar from generate_content_calendar (pass the days array)",
+                    "items": {"type": "object"}
+                },
+                "hashtag_strategy": {
+                    "type": "object",
+                    "description": "Hashtag groups from generate_hashtag_strategy"
                 }
             },
             "required": ["viral_trend", "trend_summary", "brand_angle", "influencer_pitches", "brand_post", "platform"]
@@ -406,7 +483,7 @@ def send_customer_email(
         f"CTA     : {cta_text}\n"
         f"SENT TO : {subscriber_count:,} subscribers\n"
         f"\n{'─' * 60}\n\n"
-        f"{email_body}\n"
+        f"{email_body.replace(chr(92) + 'n', chr(10))}\n"
     )
     with open(preview_file, "w", encoding="utf-8") as f:
         f.write(preview)
@@ -453,6 +530,38 @@ def find_influencers(trend: str, platform: str, niche: str, count: int = 3) -> s
     }, ensure_ascii=False)
 
 
+def generate_content_calendar(days: list) -> str:
+    """Return a 7-day content calendar (saved together with campaign at the end)."""
+    return json.dumps({
+        "success": True,
+        "days_planned": len(days),
+        "calendar": days,
+    }, ensure_ascii=False)
+
+
+def generate_hashtag_strategy(
+    broad: list,
+    niche: list,
+    branded: list,
+    trend: list,
+    caption_formula: str,
+) -> str:
+    """Return a grouped hashtag strategy (saved together with campaign at the end)."""
+    all_tags = broad + niche + branded + trend
+    return json.dumps({
+        "success": True,
+        "groups": {
+            "broad": broad,
+            "niche": niche,
+            "branded": branded,
+            "trend": trend,
+        },
+        "caption_formula": caption_formula,
+        "full_set": " ".join(all_tags),
+        "total_tags": len(all_tags),
+    }, ensure_ascii=False)
+
+
 def save_campaign_results(
     viral_trend: str,
     trend_summary: str,
@@ -464,14 +573,22 @@ def save_campaign_results(
     social_post_url: str = None,
     customer_email_subject: str = None,
     customer_email_subscribers: int = None,
+    content_calendar: list = None,
+    hashtag_strategy: dict = None,
 ) -> str:
     """Persist the campaign package to output/."""
-    os.makedirs("output", exist_ok=True)
-
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     safe_brand = brand_name.lower().replace(" ", "_")
-    filename = f"output/campaign_{safe_brand}_{timestamp}.json"
 
+    os.makedirs("output/campaigns", exist_ok=True)
+    os.makedirs("output/calendars", exist_ok=True)
+    os.makedirs("output/hashtags", exist_ok=True)
+
+    campaign_file = f"output/campaigns/campaign_{safe_brand}_{timestamp}.json"
+    calendar_file = f"output/calendars/calendar_{safe_brand}_{timestamp}.txt"
+    hashtags_file = f"output/hashtags/hashtags_{safe_brand}_{timestamp}.txt"
+
+    # Save campaign JSON
     campaign = {
         "metadata": {
             "brand": brand_name,
@@ -488,14 +605,48 @@ def save_campaign_results(
             "customer_email_subject": customer_email_subject,
             "customer_email_subscribers": customer_email_subscribers,
         },
+        "content_calendar": content_calendar or [],
+        "hashtag_strategy": hashtag_strategy or {},
     }
-
-    with open(filename, "w", encoding="utf-8") as f:
+    with open(campaign_file, "w", encoding="utf-8") as f:
         json.dump(campaign, f, indent=2, ensure_ascii=False)
+
+    # Save calendar TXT
+    if content_calendar:
+        lines = ["7-DAY CONTENT CALENDAR", "=" * 50, ""]
+        for entry in content_calendar:
+            lines.append(f"📅 {entry.get('day', '').upper()}")
+            lines.append(f"   Format : {entry.get('format', '')}")
+            lines.append(f"   Time   : {entry.get('optimal_time', '')}")
+            lines.append(f"   Caption: {entry.get('caption', '')}")
+            lines.append("")
+        with open(calendar_file, "w", encoding="utf-8") as f:
+            f.write("\n".join(lines))
+
+    # Save hashtags TXT
+    if hashtag_strategy:
+        groups = hashtag_strategy.get("groups") or hashtag_strategy
+        formula = hashtag_strategy.get("caption_formula", "")
+        full_set = hashtag_strategy.get("full_set", "")
+        lines = [
+            "HASHTAG STRATEGY",
+            "=" * 50,
+            "",
+            f"BROAD   : {' '.join(groups.get('broad', []))}",
+            f"NICHE   : {' '.join(groups.get('niche', []))}",
+            f"BRANDED : {' '.join(groups.get('branded', []))}",
+            f"TREND   : {' '.join(groups.get('trend', []))}",
+            "",
+            f"FORMULA : {formula}",
+            "",
+            f"FULL SET: {full_set}",
+        ]
+        with open(hashtags_file, "w", encoding="utf-8") as f:
+            f.write("\n".join(lines))
 
     return json.dumps({
         "success": True,
-        "saved_to": filename,
+        "saved_to": campaign_file,
         "campaign_id": f"{safe_brand}_{timestamp}",
     })
 
@@ -533,6 +684,18 @@ def execute_tool(tool_name: str, tool_input: dict, brand_name: str, platform: st
             cta_text=tool_input["cta_text"],
         )
 
+    if tool_name == "generate_content_calendar":
+        return generate_content_calendar(days=tool_input["days"])
+
+    if tool_name == "generate_hashtag_strategy":
+        return generate_hashtag_strategy(
+            broad=tool_input["broad"],
+            niche=tool_input["niche"],
+            branded=tool_input["branded"],
+            trend=tool_input["trend"],
+            caption_formula=tool_input["caption_formula"],
+        )
+
     if tool_name == "save_campaign_results":
         return save_campaign_results(
             viral_trend=tool_input["viral_trend"],
@@ -545,6 +708,8 @@ def execute_tool(tool_name: str, tool_input: dict, brand_name: str, platform: st
             social_post_url=tool_input.get("social_post_url"),
             customer_email_subject=tool_input.get("customer_email_subject"),
             customer_email_subscribers=tool_input.get("customer_email_subscribers"),
+            content_calendar=tool_input.get("content_calendar"),
+            hashtag_strategy=tool_input.get("hashtag_strategy"),
         )
 
     return json.dumps({"error": f"Unknown tool: {tool_name}"})

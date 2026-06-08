@@ -39,11 +39,13 @@ Run a viral moment hijacker campaign on {platform} in the {industry} space. Foll
 1. **DISCOVER** — Call `search_viral_trends` to find what's going viral in {industry} right now.
 2. **IDENTIFY** — Pick the best trend for {self.brand_name}, then call `find_influencers` to find 3 creators actively posting about it on {platform}.
 3. **STRATEGIZE** — Choose the brand angle that feels most authentic. If the connection to {self.brand_name} seems forced, pick a different trend.
-4. **PERSONALIZE** — Write a custom DM pitch for each influencer. Reference their specific content. Sound like a real marketing person, not a bot.
-5. **CREATE** — Write a reactive brand post for {platform} in {self.brand_name}'s voice. Match the energy and format of the platform.
-6. **POST** — Call `post_to_social_media` to publish the brand post on {self.brand_name}'s {platform} account.
-7. **EMAIL** — Write a customer email that connects the viral trend to something actionable for customers. For a meal kit brand, tie the trend to a specific recipe they can select for their next delivery (e.g., "This [trend] recipe is now available — add it to your next kit"). Make the email feel like a friendly heads-up, not a blast. Then call `send_customer_email` to send it.
-8. **SAVE** — Call `save_campaign_results` with all generated content, including the `social_post_url` from step 6, the `customer_email_subject` from step 7, and the `customer_email_subscribers` count from step 7.
+4. **HASHTAGS** — Call `generate_hashtag_strategy` with 4 groups: broad (1M+ posts), niche (10K–500K posts), branded ({self.brand_name}-owned), and trend-specific hashtags tied to the viral moment. Add a one-line caption formula explaining how to mix them.
+5. **PERSONALIZE** — Write a custom DM pitch for each influencer. Reference their specific content. Sound like a real marketing person, not a bot.
+6. **CREATE** — Write a reactive brand post for {platform} in {self.brand_name}'s voice. Match the energy and format of the platform.
+7. **CALENDAR** — Call `generate_content_calendar` with a 7-day posting plan. Each day: format (use platform-native formats only — for TikTok: Video, Duet, Stitch, Carousel, Story; for Instagram: Reel, Story, Carousel, Feed Post; for LinkedIn: Post, Article, Video), full caption, and optimal posting time. Build momentum — day 1 jumps on the trend, days 2–5 sustain it with related content, days 6–7 convert with a CTA.
+8. **POST** — Call `post_to_social_media` to publish the brand post on {self.brand_name}'s {platform} account.
+9. **EMAIL** — Write a customer email that connects the viral trend to something actionable for customers. For a meal kit brand, tie the trend to a specific recipe they can select for their next delivery (e.g., "This [trend] recipe is now available — add it to your next kit"). Make the email feel like a friendly heads-up, not a blast. Then call `send_customer_email` to send it.
+10. **SAVE** — Call `save_campaign_results` with all generated content, including the `social_post_url` from step 8, the `customer_email_subject` from step 9, the `customer_email_subscribers` count from step 9, the `content_calendar` days array from step 7, and the `hashtag_strategy` object from step 4.
 
 ## Quality Rules
 - DMs must be warm, specific, and platform-native. No "I came across your profile" openers.

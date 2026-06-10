@@ -1,38 +1,84 @@
 # Viral Moment Hijacker
 
-An AI marketing agent that monitors what's going viral in any industry, identifies relevant creators, writes personalized outreach, publishes a reactive brand post, and emails your customers — all from a single command.
-
-Built for **Forkly** (a meal kit brand) as a university project on agentic AI systems. Fully general-purpose: swap in any brand, industry, and platform via CLI flags.
+An AI agent that monitors what's going viral in any industry, identifies the right creators to partner with, writes personalized outreach, publishes a reactive brand post, and emails your customers — all from a single command.
 
 ---
 
-## What it does
+## The problem it solves
 
-When a trend blows up on TikTok or Instagram, most brands miss the window because the manual workflow is too slow: monitor trends → find creators → research each one → write outreach → draft a post → notify customers. By the time that's done, the moment is stale.
+When a trend blows up, the brands that win are the ones that respond within hours — not days. But the manual workflow is too slow: monitor platforms → find relevant creators → research each one → write personalized outreach → draft a post → notify your customers. By the time all of that is done, the moment has passed and the audience has moved on.
 
-This agent runs that entire workflow autonomously in one pipeline:
+This agent runs that entire workflow in one automated pipeline. It scrapes live trend data, evaluates real creator profiles, reasons about the right brand angle, and produces ready-to-use content — all driven by a Claude Opus orchestrator that makes strategic decisions the same way a human strategist would.
+
+**For marketers, this means:**
+- Catching viral moments in the same news cycle they happen
+- Getting a full campaign (influencer outreach + brand post + customer email + 7-day content calendar) in under 5 minutes
+- Personalized DM pitches that reference each creator's actual content — not generic templates
+- A documented strategy with brand angle reasoning, not just generated copy
+
+---
+
+## How it works
 
 ```
 1. DISCOVER    Scrapes live trending content from your target platform via Apify
-               (TikTok scraper, Instagram Hashtag Scraper, or LinkedIn Viral Posts Finder)
+               TikTok, Instagram, or LinkedIn — real posts, real engagement numbers
 
-2. IDENTIFY    Finds 3 real creators actively posting about the top trend on that platform
+2. ANALYZE     TrendResearchAgent ranks the scraped data by opportunity score
+               and returns content angles, not just raw hashtags
 
-3. STRATEGIZE  Picks the brand angle that fits most authentically — flags it if the connection feels forced
+3. IDENTIFY    InfluencerAgent evaluates real creator profiles for niche fit
+               Returns scored matches with a "why good fit" explanation per creator
 
-4. PERSONALIZE Writes a custom DM pitch for each creator, referencing their specific content and style
+4. STRATEGIZE  Orchestrator picks the brand angle that fits most authentically
+               Flags it if the connection feels forced — won't produce dishonest copy
 
-5. CREATE      Drafts a reactive brand post in your brand's voice, formatted for the target platform
+5. HASHTAGS    Generates a grouped strategy: broad reach + niche + branded + trend-specific
+               Includes a caption formula showing how to mix the groups per post
 
-6. POST        Publishes the brand post to your company's social media account
+6. PERSONALIZE Writes a custom DM pitch per creator using their content style,
+               engagement pattern, and most recent trend-related post
 
-7. EMAIL       Writes and sends a trend-inspired email to your customer list
-               (for meal kit brands: ties the trend to a recipe customers can add to their next delivery)
+7. CREATE      Drafts a reactive brand post in your brand's voice,
+               formatted for the target platform's native style
 
-8. SAVE        Saves the complete campaign package to output/ as a timestamped JSON file
+8. CALENDAR    Produces a 7-day content plan: day 1 jumps on the trend,
+               days 2–5 sustain it, days 6–7 convert with a CTA
+
+9. POST        Publishes the brand post to your social media account
+
+10. EMAIL      EmailAgent writes a full customer email connecting the trend to
+               a specific product recommendation, then sends it to your list
+
+11. SAVE       Writes the complete campaign package to output/ as a timestamped JSON
 ```
 
-A single Claude Opus 4.8 orchestrator runs all reasoning steps. It decides on its own when to call each tool — the same way a human strategist would think through the problem. All creative output (brand angle, DM pitches, brand post, customer email) comes from Claude's own reasoning, not rigid templates.
+---
+
+## Multi-agent architecture
+
+The agent is built as an orchestrator that coordinates three specialized sub-agents. Each sub-agent is its own Claude API call with a focused system prompt and the right model for its job.
+
+```
+Claude Opus 4.8 (Orchestrator)
+    Handles: strategy, brand angle, DM pitches, brand post, content calendar
+    │
+    ├── search_viral_trends  →  TrendResearchAgent  (claude-haiku-4-5)
+    │                           Scrapes Apify live data, then analyzes and ranks
+    │                           trends by opportunity score + suggests content angles
+    │
+    ├── find_influencers     →  InfluencerAgent     (claude-haiku-4-5)
+    │                           Scrapes Apify creator profiles, scores each on
+    │                           niche fit, returns ranked matches with why_good_fit
+    │
+    └── send_customer_email  →  EmailAgent          (claude-sonnet-4-6)
+                                Writes the full email (subject, body, CTA)
+                                from trend context, then simulates sending
+```
+
+The orchestrator never writes the email itself — it delegates to the EmailAgent with just the trend name, trend summary, and brand angle. The EmailAgent handles all copywriting. Same pattern for trends and influencers: the orchestrator receives analyzed reports, not raw scraped data, so it can focus on strategy.
+
+**Why this matters:** Each agent has one job and the right model for it. Haiku is fast and cheap for structured data analysis. Sonnet produces better creative copy. Opus handles the multi-step strategic reasoning that ties everything together.
 
 ---
 
@@ -40,18 +86,23 @@ A single Claude Opus 4.8 orchestrator runs all reasoning steps. It decides on it
 
 ```
 viral-moment-hijacker-agent/
-├── main.py              CLI entry point — parses args, runs the agent, displays results
+├── main.py                  CLI entry point
 ├── src/
-│   ├── agent.py         Orchestrator — system prompt, agentic loop, tool dispatch logging
-│   ├── tools.py         All tool schemas + implementations (trend search, influencer find, post, email, save)
-│   └── config.py        Model name + API key loader
+│   ├── agent.py             Orchestrator — system prompt, agentic loop, tool dispatch
+│   ├── tools.py             Tool schemas + dispatcher (delegates to sub-agents)
+│   ├── config.py            Model constants for orchestrator + all 3 sub-agents
+│   └── agents/
+│       ├── trend_agent.py       TrendResearchAgent — scrape + analyze trends
+│       ├── influencer_agent.py  InfluencerAgent — scrape + score creators
+│       └── email_agent.py       EmailAgent — write + send customer email
 ├── output/
-│   ├── *.json           One campaign file per run
-│   └── emails/
-│       └── *.txt        Customer email previews
-├── .env                 Your API keys (never commit this)
-├── .env.example         Template showing which keys are needed
-└── requirements.txt     Python dependencies
+│   ├── campaigns/           Full campaign JSON, one file per run
+│   ├── calendars/           7-day content calendar as plain text
+│   ├── hashtags/            Hashtag strategy as plain text
+│   └── emails/              Customer email previews as plain text
+├── .env                     Your API keys (never commit this)
+├── .env.example             Template showing which keys are needed
+└── requirements.txt         Python dependencies
 ```
 
 ---
@@ -76,8 +127,6 @@ This installs: `anthropic`, `python-dotenv`, `rich`, `apify-client`.
 
 ### 3. Create your `.env` file
 
-Copy the template:
-
 ```bash
 cp .env.example .env
 ```
@@ -90,10 +139,10 @@ Then open `.env` and fill in your keys. Instructions for each key are in the nex
 
 ### Anthropic (required)
 
-The agent is powered by Claude Opus 4.8. Without this key, nothing runs.
+Powers all Claude models in the pipeline (Opus, Sonnet, Haiku).
 
 1. Go to [console.anthropic.com](https://console.anthropic.com)
-2. Sign in → click **API Keys** in the left sidebar → **Create Key**
+2. Sign in → **API Keys** in the left sidebar → **Create Key**
 3. Copy the key (starts with `sk-ant-api03-...`)
 4. Paste it in `.env`:
 
@@ -103,14 +152,14 @@ ANTHROPIC_API_KEY=sk-ant-api03-...
 
 ### Apify (required)
 
-Apify powers both trend discovery and influencer finding. It scrapes live data from TikTok, Instagram, or LinkedIn depending on the platform you choose. The free tier gives $5 in credits — enough for many runs.
+Powers live social media scraping for both trend discovery and influencer finding. The free tier gives $5 in credits — enough for many runs.
 
 1. Go to [apify.com](https://apify.com) and sign up (free)
 2. Confirm your email, then log in
 3. Click your profile icon (top right) → **Settings** → **Integrations**
 4. Under **Personal API tokens**, click **+ Add new token**
 5. Name it anything, click **Create**, then copy the token (starts with `apify_api_...`)
-6. Paste it into `.env`:
+6. Paste it in `.env`:
 
 ```env
 APIFY_API_TOKEN=apify_api_...
@@ -123,22 +172,9 @@ ANTHROPIC_API_KEY=sk-ant-api03-...
 APIFY_API_TOKEN=apify_api_...
 ```
 
-That's it — two keys and the agent is fully operational.
-
 ---
 
 ## Running the agent
-
-### Forkly (meal kit brand) on TikTok
-
-```bash
-python main.py \
-  --industry food \
-  --brand-name "Forkly" \
-  --brand-description "Fun meal kit brand delivering weekly recipe kits to millennials and Gen Z" \
-  --platform TikTok \
-  --tone "casual, witty, food-obsessed"
-```
 
 ### Fitness brand on Instagram
 
@@ -152,13 +188,24 @@ python main.py \
   --brand-values "sustainability, performance, community"
 ```
 
+### Food brand on TikTok
+
+```bash
+python main.py \
+  --industry food \
+  --brand-name "YourBrand" \
+  --brand-description "One sentence describing what your brand does and who it's for" \
+  --platform TikTok \
+  --tone "casual, witty, food-obsessed"
+```
+
 ### B2B startup on LinkedIn
 
 ```bash
 python main.py \
   --industry fintech \
   --brand-name "PayFlow" \
-  --brand-description "B2B payment processing startup" \
+  --brand-description "B2B payment processing startup for fast-growing companies" \
   --platform LinkedIn \
   --tone professional \
   --brand-values "transparent, founder-friendly, no hidden fees"
@@ -179,38 +226,48 @@ python main.py \
 
 ## What to expect when it runs
 
-The terminal shows each step as it executes:
+The terminal shows each step as it executes, including which sub-agent is running:
 
 ```
-VIRAL MOMENT HIJACKER
-AI-powered trend + influencer marketing agent
+╭─────────────────────────────────────────────╮
+│           VIRAL MOMENT HIJACKER             │
+│  AI-powered trend + influencer marketing    │
+╰─────────────────────────────────────────────╯
 
 Campaign Configuration
-  Brand:    Forkly
-  Industry: food
-  Platform: TikTok
-  Tone:     casual, witty, food-obsessed
+  Brand:    ActiveWear Co
+  Industry: fitness
+  Platform: Instagram
+  Tone:     casual
 
 ── Starting Pipeline ──────────────────────────────────
 
 Claude is reasoning... (step 1)
 
 → Tool: search_viral_trends
-  { "industry": "food", "timeframe": "last 24 hours" }
-  ✓ Done   ← scrapes live TikTok data via Apify
+  { "industry": "fitness", "timeframe": "last 24 hours" }
+  Executing search_viral_trends...     ← TrendResearchAgent scrapes Apify + analyzes
+  ✓ Done
 
 → Tool: find_influencers
-  { "trend": "Sourdough Discard Movement", "platform": "TikTok", ... }
-  ✓ Done   ← live TikTok scrape, ~30 seconds
+  { "trend": "25-Day Gym Streak", "platform": "Instagram", ... }
+  Executing find_influencers...        ← InfluencerAgent scrapes + scores creators
+  ✓ Done
 
-Claude is reasoning... (step 3)
+Claude is reasoning... (step 3)        ← Orchestrator picks brand angle + writes DMs + post
+
+→ Tool: generate_hashtag_strategy
+  ✓ Done
+
+→ Tool: generate_content_calendar
+  ✓ Done
 
 → Tool: post_to_social_media
-  { "platform": "TikTok", "post_content": "POV: you saved your sourdough..." }
   ✓ Done
 
 → Tool: send_customer_email
-  { "subject": "Everyone's doing this — and you can cook it 🍜", ... }
+  { "trend_name": "25-Day Gym Streak", ... }
+  Executing send_customer_email...     ← EmailAgent writes the email
   ✓ Done
 
 → Tool: save_campaign_results
@@ -218,49 +275,59 @@ Claude is reasoning... (step 3)
 
 ── Campaign Complete ───────────────────────────────────
 
-✓ Saved to output/campaign_forkly_20260606_092659.json
+✓ Saved to output/campaigns/campaign_activewear_co_20260610_142301.json
 ```
 
-**Total runtime: 2–4 minutes.** Most of the time is the Apify scraping steps (~30s each) and Claude's reasoning.
+**Total runtime: 2–5 minutes.** Most of the time is Apify scraping (~30–60s per step).
 
 ---
 
 ## Output files
 
-### Campaign JSON — `output/campaign_<brand>_<timestamp>.json`
+### `output/campaigns/campaign_<brand>_<timestamp>.json`
 
 The complete campaign package:
 
 ```json
 {
   "metadata": {
-    "brand": "Forkly",
-    "platform": "TikTok",
-    "generated_at": "2026-06-06T09:26:59"
+    "brand": "ActiveWear Co",
+    "platform": "Instagram",
+    "generated_at": "2026-06-10T14:23:01"
   },
-  "viral_trend": "Sourdough Discard / Zero-Waste Cooking Movement",
-  "trend_summary": "Eco-conscious food creators are turning sourdough discard into pancakes...",
-  "brand_angle": "Extend the 'nothing dies here' energy from the sourdough jar to the whole fridge...",
+  "viral_trend": "25-Day Gym Streak Challenge",
+  "trend_summary": "Fitness creators are documenting unbroken 25-day gym streaks...",
+  "brand_angle": "Be the brand that makes the streak physically sustainable — not just mentally...",
   "influencer_pitches": [
     {
-      "name": "Maya Chen",
-      "handle": "@zero_waste_kitchen",
-      "followers": "487K",
-      "dm_pitch": "Hi Maya! The '1 batch of discard = 24 pancakes' overlay in your latest video..."
+      "name": "Jordan Lee",
+      "handle": "@jordanlifts",
+      "followers": "210K",
+      "dm_pitch": "Hey Jordan! The progression shots in your Day 18 reel are exactly the kind of content..."
     }
   ],
-  "brand_post": "POV: you saved your sourdough starter from death but your cilantro has been screaming...",
+  "brand_post": "Day 25 looks different in every body. Same gear. 🌱 #GymStreak #ActiveWearCo",
   "distribution": {
-    "social_post_url": "https://www.tiktok.com/@brand/video/abc123xyz",
-    "customer_email_subject": "Everyone's doing this — and you can cook it 🍜",
-    "customer_email_subscribers": 14230
-  }
+    "social_post_url": "https://www.instagram.com/p/abc123/",
+    "customer_email_subject": "Your streak deserves gear that keeps up",
+    "customer_email_subscribers": 18400
+  },
+  "content_calendar": [...],
+  "hashtag_strategy": { "groups": { "broad": [...], "niche": [...], "branded": [...], "trend": [...] } }
 }
 ```
 
-### Customer email preview — `output/emails/email_<timestamp>.txt`
+### `output/calendars/calendar_<brand>_<timestamp>.txt`
 
-The full email Claude wrote for your customer list, saved as plain text.
+The 7-day posting plan as readable plain text.
+
+### `output/hashtags/hashtags_<brand>_<timestamp>.txt`
+
+All hashtag groups and the caption formula.
+
+### `output/emails/email_<timestamp>.txt`
+
+The full customer email the EmailAgent wrote, saved as plain text.
 
 ---
 
@@ -269,58 +336,29 @@ The full email Claude wrote for your customer list, saved as plain text.
 | Step | Status | Notes |
 |---|---|---|
 | Trend discovery | **Real** | Live data scraped from TikTok / Instagram / LinkedIn via Apify |
-| Influencer profiles | **Real** | Scraped live via Apify TikTok scraper |
-| Claude strategy + DMs + post + email | **Real** | Claude reasons through everything |
-| Publishing to your TikTok/Instagram | **Simulated** | Returns a fake post URL; no account needed |
+| Influencer profiles | **Real** | Scraped live — real follower counts, bios, recent posts |
+| Strategy, DMs, brand post | **Real** | Claude Opus reasons through all of it |
+| Customer email | **Real** | EmailAgent writes original copy from your brand context |
+| Publishing to social media | **Simulated** | Returns a fake post URL; no platform account needed |
 | Sending the customer email | **Simulated** | Saves a preview to `output/emails/`; no email provider needed |
 
-The social posting and email sending are simulated because real publishing APIs (Instagram Graph API, TikTok Business API, Klaviyo, Mailchimp) require business account verification that isn't practical for a demo. In production, you'd swap the function bodies in `src/tools.py` for the real API calls — the rest of the pipeline stays identical.
-
----
-
-## Architecture
-
-```
-main.py  (CLI)
-    │
-    └── ViralMomentHijacker  (src/agent.py)
-            │
-            ├── Orchestrator: claude-opus-4-8
-            │   adaptive thinking, effort: high
-            │   manual agentic loop, max 15 iterations
-            │
-            └── Tools  (src/tools.py)
-                    ├── search_viral_trends()     Apify — platform-specific trend scraper
-                    │                             TikTok → clockworks/tiktok-scraper
-                    │                             Instagram → apify/instagram-hashtag-scraper
-                    │                             LinkedIn → scarletapi/linkedin-viral-posts-finder
-                    ├── find_influencers()         Apify — clockworks/tiktok-scraper
-                    ├── post_to_social_media()     Platform publishing API (simulated)
-                    ├── send_customer_email()      Email provider API (simulated)
-                    └── save_campaign_results()    Writes output JSON
-```
-
-**Why claude-opus-4-8 with adaptive thinking?**
-The campaign strategy requires multi-step reasoning: evaluating trend fit, picking a brand angle, personalizing three separate DM pitches, and writing both a platform post and a customer email in the same voice. Adaptive thinking lets Claude decide how deeply to reason about each step rather than using a fixed compute budget.
-
-**Why a manual agentic loop?**
-The manual loop in `agent.py` gives full control to log each tool call in the terminal, inject the brand name into the save tool, and track intermediate results (post URL, email stats) for the final display. The Anthropic tool runner would work too but hides intermediate steps.
-
-**Why simulated posting and email?**
-Real social publishing and email APIs require business accounts, domain verification, and OAuth flows that complicate a demo. The simulated tools generate realistic output (fake post URL, subscriber count, open rate estimate) so the full pipeline can run end-to-end without external accounts.
+Publishing and email sending are simulated because real APIs (Instagram Graph API, TikTok Business API, Klaviyo, Mailchimp) require business accounts and OAuth verification that aren't practical for a demo environment. In production, you'd replace the simulation blocks in `src/tools.py` and `src/agents/email_agent.py` with real API calls — the rest of the pipeline stays identical.
 
 ---
 
 ## Troubleshooting
 
-**`APIFY_API_TOKEN not set`**
+**`APIFY_API_TOKEN not set`**  
 Add your Apify token to `.env`. See the API keys section above.
 
-**`ModuleNotFoundError`**
-Run `pip install -r requirements.txt` — you likely skipped the install step.
+**`ModuleNotFoundError`**  
+Run `pip install -r requirements.txt`.
 
-**Agent stops mid-run with a billing error**
-Check your Anthropic account balance at [console.anthropic.com](https://console.anthropic.com). Claude Opus 4.8 costs roughly $0.05–0.15 per full campaign run.
+**Agent stops mid-run with a billing error**  
+Check your Anthropic account balance at [console.anthropic.com](https://console.anthropic.com). A full campaign run uses Opus (orchestrator), Sonnet (email), and Haiku (trends + influencers) — typically $0.05–0.20 total.
 
-**Apify run hangs for more than 2 minutes**
+**Apify run hangs for more than 2 minutes**  
 Apify occasionally has slow cold starts. Cancel and re-run — the second attempt is usually fast.
+
+**`json.JSONDecodeError` from a sub-agent**  
+A sub-agent occasionally returns non-JSON text if Claude prefixes its response. The EmailAgent has a fallback that surfaces the raw response. Re-running usually resolves it.

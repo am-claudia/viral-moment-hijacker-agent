@@ -3,7 +3,13 @@ import os
 import random
 import datetime
 import anthropic
-from ..config import EMAIL_AGENT_MODEL
+
+try:
+    from ..config import EMAIL_AGENT_MODEL
+except ImportError:
+    import sys
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
+    from src.config import EMAIL_AGENT_MODEL
 
 
 def run_email_agent(
@@ -100,3 +106,37 @@ def run_email_agent(
         "status": "sent",
         "note": "[SIMULATED] In production, calls SendGrid / Mailchimp / Klaviyo API.",
     })
+
+
+if __name__ == "__main__":
+    import argparse
+    from dotenv import load_dotenv
+    load_dotenv(override=True)
+
+    parser = argparse.ArgumentParser(description="EmailAgent — write and send a trend-inspired customer email")
+    parser.add_argument("--trend-name", required=True, dest="trend_name", help="Name of the viral trend")
+    parser.add_argument("--trend-summary", required=True, dest="trend_summary", help="2-3 sentence summary of the trend")
+    parser.add_argument("--brand-angle", required=True, dest="brand_angle", help="How the brand joins this trend")
+    parser.add_argument("--brand-name", required=True, dest="brand_name", help="Brand name")
+    parser.add_argument("--brand-description", required=True, dest="brand_description", help="One-sentence brand description")
+    parser.add_argument("--platform", default="TikTok", help="Platform where the trend is happening")
+    parser.add_argument("--tone", default="casual", help="Brand tone (e.g. casual, professional)")
+    args = parser.parse_args()
+
+    print(f"\nWriting customer email for '{args.trend_name}'...\n")
+    result = run_email_agent(
+        trend_name=args.trend_name,
+        trend_summary=args.trend_summary,
+        brand_angle=args.brand_angle,
+        platform=args.platform,
+        brand_name=args.brand_name,
+        brand_description=args.brand_description,
+        tone=args.tone,
+    )
+    data = json.loads(result)
+    print(f"Subject  : {data['subject']}")
+    print(f"Feature  : {data['featured_item']}")
+    print(f"CTA      : {data['cta_text']}")
+    print(f"Sent to  : {data['subscribers_reached']:,} subscribers  (est. open rate: {data['estimated_open_rate']})")
+    print(f"Preview  : {data['email_preview_saved']}")
+    print(f"\n--- EMAIL BODY ---\n{data['email_body']}")

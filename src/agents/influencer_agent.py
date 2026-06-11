@@ -2,7 +2,13 @@ import json
 import os
 import anthropic
 from apify_client import ApifyClient
-from ..config import INFLUENCER_AGENT_MODEL
+
+try:
+    from ..config import INFLUENCER_AGENT_MODEL
+except ImportError:
+    import sys
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
+    from src.config import INFLUENCER_AGENT_MODEL
 
 
 def _fmt(n: int) -> str:
@@ -98,3 +104,25 @@ def run_influencer_agent(trend: str, platform: str, niche: str, count: int = 3) 
     )
 
     return response.content[0].text
+
+
+if __name__ == "__main__":
+    import argparse
+    from dotenv import load_dotenv
+    load_dotenv(override=True)
+
+    parser = argparse.ArgumentParser(description="InfluencerAgent — find and score creators for a trend")
+    parser.add_argument("--trend", required=True, help="Trend or hashtag to search (e.g. '#gymstreak')")
+    parser.add_argument("--platform", default="TikTok", choices=["TikTok", "Instagram", "LinkedIn"])
+    parser.add_argument("--niche", required=True, help="Niche within the industry (e.g. 'home cooking')")
+    parser.add_argument("--count", type=int, default=3, help="Number of influencers to return (default: 3)")
+    args = parser.parse_args()
+
+    print(f"\nFinding {args.count} influencers for '{args.trend}' on {args.platform} ({args.niche})...\n")
+    result = run_influencer_agent(trend=args.trend, platform=args.platform, niche=args.niche, count=args.count)
+    data = json.loads(result)
+    for inf in data.get("influencers", []):
+        print(f"{inf['name']} ({inf['handle']})  {inf['followers']} followers  fit: {inf['fit_score']}/10")
+        print(f"   Style : {inf['content_style']}")
+        print(f"   Why   : {inf['why_good_fit']}")
+        print(f"   Post  : {inf.get('recent_trend_post', '')[:120]}\n")

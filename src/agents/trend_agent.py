@@ -2,7 +2,13 @@ import json
 import os
 import anthropic
 from apify_client import ApifyClient
-from ..config import TREND_AGENT_MODEL
+
+try:
+    from ..config import TREND_AGENT_MODEL
+except ImportError:
+    import sys
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
+    from src.config import TREND_AGENT_MODEL
 
 
 def _fmt(n: int) -> str:
@@ -152,3 +158,23 @@ def run_trend_agent(industry: str, timeframe: str, platform: str) -> str:
     )
 
     return response.content[0].text
+
+
+if __name__ == "__main__":
+    import argparse
+    from dotenv import load_dotenv
+    load_dotenv(override=True)
+
+    parser = argparse.ArgumentParser(description="TrendResearchAgent — find what's going viral")
+    parser.add_argument("--industry", required=True, help="Industry to scan (e.g. food, fitness)")
+    parser.add_argument("--platform", default="TikTok", choices=["TikTok", "Instagram", "LinkedIn"])
+    parser.add_argument("--timeframe", default="last 24 hours", choices=["last 24 hours", "last 48 hours", "this week"])
+    args = parser.parse_args()
+
+    print(f"\nScanning {args.platform} for '{args.industry}' trends ({args.timeframe})...\n")
+    result = run_trend_agent(industry=args.industry, timeframe=args.timeframe, platform=args.platform)
+    data = json.loads(result)
+    for i, t in enumerate(data.get("top_trends", []), 1):
+        print(f"#{i} {t['trend_name']} ({t['hashtag']})  score: {t['opportunity_score']}/10")
+        print(f"   Why viral : {t['why_viral']}")
+        print(f"   Angle     : {t['content_angle']}\n")

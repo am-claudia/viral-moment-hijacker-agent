@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Viral Moment Hijacker · Forkly · AI Agent for Marketing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FAFAF7;
+    --ink:#16181A;
+    --accent:#FF4D2E;
+    --accent-soft:#FFE9E4;
+    --green:#1FA463;
+    --green-soft:#E4F4EC;
+    --amber:#C98A00;
+    --amber-soft:#FBF1DC;
+    --blue:#2563EB;
+    --blue-soft:#E5EDFF;
+    --muted:#8A8F98;
+    --panel:#FFFFFF;
+    --rule:#E3E1DA;
+    --dark:#1B1D21;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--paper);color:var(--ink);font-family:'Space Grotesk',system-ui,sans-serif;line-height:1.55}
+  .page{max-width:860px;margin:0 auto;padding:56px 40px 72px}
+
+  .display{font-family:'Anton',Impact,sans-serif;text-transform:uppercase;letter-spacing:.5px;line-height:.95}
+  .mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+  .eyebrow{font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+
+  /* highlight words that guide the reader */
+  .hl{background:var(--accent-soft);color:var(--accent);font-weight:700;padding:0 4px;border-radius:4px}
+  .hg{background:var(--green-soft);color:var(--green);font-weight:700;padding:0 4px;border-radius:4px}
+  .hb{background:var(--blue-soft);color:var(--blue);font-weight:700;padding:0 4px;border-radius:4px}
+  .key{color:var(--accent);font-weight:700}
+
+  /* terminal frame */
+  .term{border:1.5px solid var(--ink);border-radius:10px;background:var(--panel);margin:24px 0;overflow:hidden}
+  .term-bar{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1.5px solid var(--ink);background:var(--paper)}
+  .term-bar .dots{display:flex;gap:6px}
+  .term-bar .dot{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--ink)}
+  .term-bar .dot.fill{background:var(--accent);border-color:var(--accent)}
+  .term-bar .title{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--muted);letter-spacing:.06em}
+  .term-body{padding:20px 24px}
+  .term.dark .term-body{background:var(--dark);color:#E8E6DF}
+  .term.dark pre{color:#E8E6DF}
+
+  .chip{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:4px;vertical-align:middle}
+  .chip.real{color:var(--green);border:1.5px solid var(--green);background:var(--green-soft)}
+  .chip.sim{color:var(--amber);border:1.5px solid var(--amber);background:var(--amber-soft)}
+  .chip.risk{color:var(--accent);border:1.5px solid var(--accent);background:var(--accent-soft)}
+  .chip.model{color:var(--blue);border:1.5px solid var(--blue);background:var(--blue-soft)}
+
+  header .cmd{font-family:'JetBrains Mono',monospace;font-size:.82rem;color:var(--muted);margin-bottom:22px}
+  header .cmd b{color:var(--accent);font-weight:700}
+  h1.display{font-size:clamp(2.6rem,7vw,4.4rem);margin:6px 0 4px}
+  h1 .hi{color:var(--accent)}
+  .subtitle{font-size:1.05rem;max-width:580px;margin-top:14px}
+  .meta-row{display:flex;flex-wrap:wrap;gap:8px 28px;margin-top:22px;padding-top:16px;border-top:1.5px solid var(--ink);font-family:'JetBrains Mono',monospace;font-size:.74rem}
+  .meta-row span b{color:var(--accent);font-weight:700}
+
+  /* table of contents */
+  .toc{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:26px}
+  .toc a{display:block;border:1.5px solid var(--ink);border-radius:8px;padding:10px 12px;text-decoration:none;color:var(--ink);background:var(--panel)}
+  .toc a:hover{background:var(--accent-soft)}
+  .toc .n{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--accent);font-weight:700;display:block}
+  .toc .t{font-size:.78rem;font-weight:700;line-height:1.2}
+
+  section{margin-top:60px}
+  h2.display{font-size:1.9rem;margin-bottom:4px}
+  h2 .num{color:var(--accent);margin-right:10px}
+  .section-sub{color:var(--muted);font-size:.95rem;margin-bottom:8px;max-width:62ch}
+  h3{font-family:'JetBrains Mono',monospace;font-size:.8rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin:28px 0 10px}
+  h3 .tick{color:var(--accent)}
+  p{margin:10px 0;max-width:70ch}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0}
+  .grid2 .cell{padding:18px 22px;border-bottom:1.5px solid var(--rule)}
+  .grid2 .cell:nth-child(odd){border-right:1.5px solid var(--rule)}
+  .grid2 .cell:nth-last-child(-n+2){border-bottom:none}
+  .cell .eyebrow{margin-bottom:6px;display:block;color:var(--accent)}
+  .cell p{font-size:.9rem;margin:0}
+
+  /* architecture cards */
+  .arch{margin:24px 0}
+  .arch .boss{border:2px solid var(--ink);border-radius:10px;background:var(--panel);padding:16px 20px;text-align:center;max-width:430px;margin:0 auto}
+  .arch .boss .role{font-family:'Anton',sans-serif;font-size:1.15rem;text-transform:uppercase;letter-spacing:.5px}
+  .arch .boss .does{font-size:.82rem;color:var(--muted);margin-top:4px}
+  .arch .stem{width:2px;height:22px;background:var(--ink);margin:0 auto}
+  .arch .subs{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .arch .sub{border:1.5px solid var(--ink);border-radius:10px;background:var(--panel);padding:14px 16px}
+  .arch .sub .role{font-weight:700;font-size:.92rem}
+  .arch .sub .tool{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--accent);margin:3px 0 7px}
+  .arch .sub .does{font-size:.8rem;color:var(--muted)}
+  .arch .sub .chip{margin-top:9px}
+
+  /* pipeline */
+  .pipe{list-style:none}
+  .pipe li{display:grid;grid-template-columns:34px 140px 1fr;gap:14px;padding:11px 0;border-bottom:1px dashed var(--rule);font-size:.9rem;align-items:baseline}
+  .pipe li:last-child{border-bottom:none}
+  .pipe .n{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--accent);font-size:.8rem}
+  .pipe .step{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:.78rem;letter-spacing:.04em}
+  .pipe .agent{color:var(--muted);font-size:.78rem;font-family:'JetBrains Mono',monospace;white-space:nowrap}
+
+  pre{font-family:'JetBrains Mono',monospace;font-size:.78rem;line-height:1.65;overflow-x:auto;white-space:pre-wrap}
+  pre .c{color:var(--muted)}
+  pre .a{color:var(--accent);font-weight:700}
+  pre .g{color:var(--green)}
+  .term.dark pre .c{color:#9AA0A8}
+  .term.dark pre .a{color:#FF7A5C}
+  .term.dark pre .g{color:#5FD49B}
+
+  /* timeline */
+  .timeline{list-style:none;margin:16px 0}
+  .timeline li{position:relative;padding:0 0 22px 30px;border-left:2px solid var(--rule);margin-left:8px}
+  .timeline li:last-child{padding-bottom:0;border-left-color:transparent}
+  .timeline li::before{content:"";position:absolute;left:-7px;top:3px;width:12px;height:12px;border-radius:50%;background:var(--accent);border:2.5px solid var(--paper)}
+  .timeline .when{font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .timeline .what{font-weight:700;margin:2px 0}
+  .timeline p{font-size:.88rem;margin:4px 0 0}
+
+  /* demo cards */
+  .quote{border-left:4px solid var(--accent);background:var(--panel);padding:14px 18px;border-radius:0 10px 10px 0;margin:16px 0;font-size:.92rem}
+  .quote .who{font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;font-weight:700}
+  .stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0}
+  .stat{border:1.5px solid var(--ink);border-radius:10px;background:var(--panel);padding:14px 16px;text-align:center}
+  .stat .big{font-family:'Anton',sans-serif;font-size:1.7rem;color:var(--accent)}
+  .stat .lbl{font-family:'JetBrains Mono',monospace;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+
+  .log{font-family:'JetBrains Mono',monospace;font-size:.83rem;line-height:1.7}
+  .log .ok::before{content:"✓ ";color:var(--green);font-weight:700}
+  .log .warn::before{content:"⚠ ";color:var(--amber);font-weight:700}
+  .log .err::before{content:"✗ ";color:var(--accent);font-weight:700}
+  .log div{margin:7px 0;padding-left:1.4em;text-indent:-1.4em}
+  .log b{font-weight:700}
+
+  table{width:100%;border-collapse:collapse;font-size:.86rem;margin:14px 0}
+  th{font-family:'JetBrains Mono',monospace;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1.5px solid var(--ink)}
+  td{padding:10px;border-bottom:1px solid var(--rule);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+
+  .kv{font-family:'JetBrains Mono',monospace;font-size:.82rem;line-height:2}
+  .kv b{color:var(--accent);display:inline-block;min-width:150px;font-weight:700}
+
+  footer{margin-top:64px;padding-top:18px;border-top:1.5px solid var(--ink);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--muted)}
+
+  /* course banner */
+  .course-banner{font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;border-bottom:1.5px solid var(--ink);padding-bottom:14px;margin-bottom:34px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;color:var(--muted)}
+  .course-banner b{color:var(--ink)}
+  .course-banner .g2{color:var(--accent);font-family:'Anton',sans-serif;font-size:1rem;letter-spacing:.06em;text-transform:uppercase}
+  .course-banner .sep{opacity:.35}
+
+  /* horizontal flow with arrows */
+  .flow-h{display:flex;align-items:flex-start}
+  .fh-step{flex:1;padding:18px 16px}
+  .fh-step .eyebrow{margin-bottom:6px;display:block;color:var(--accent)}
+  .fh-step p{font-size:.83rem;margin:0}
+  .fh-arrow{display:flex;align-items:flex-start;padding-top:22px;font-size:1.5rem;color:var(--accent);font-weight:900;flex-shrink:0;line-height:1;user-select:none}
+
+  /* industry examples grid */
+  .industry-label{font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:22px 0 10px;display:block}
+  .industry-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin:0 0 4px}
+  .ind{border:1.5px solid var(--rule);border-radius:10px;background:var(--panel);padding:12px 14px;width:160px}
+  .ind-icon{font-size:1.2rem;margin-bottom:5px}
+  .ind-name{font-weight:700;font-size:.82rem;margin-bottom:3px}
+  .ind-note{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--muted);line-height:1.4}
+
+  @media print{
+    body{background:#fff}
+    .page{padding:0;max-width:none}
+    .pagebreak{break-before:page}
+    .term,.grid2,.arch,.stat-row,.quote{break-inside:avoid}
+    a{color:inherit;text-decoration:none}
+    .toc a:hover{background:var(--panel)}
+  }
+  @media (max-width:680px){
+    .grid2{grid-template-columns:1fr}
+    .grid2 .cell:nth-child(odd){border-right:none}
+    .toc{grid-template-columns:1fr 1fr}
+    .arch .subs{grid-template-columns:1fr}
+    .stat-row{grid-template-columns:1fr}
+    .pipe li{grid-template-columns:30px 1fr}
+    .pipe li .desc{grid-column:2}
+    .flow-h{flex-direction:column}
+    .fh-arrow{align-self:center;padding-top:0;font-size:1.2rem}
+    .ind{width:calc(50% - 5px)}
+  }
+  @media (prefers-reduced-motion:no-preference){
+    header .cmd b{animation:blink 1.2s steps(1) infinite}
+    @keyframes blink{50%{opacity:0}}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="course-banner">
+  <b>Big Data &amp; AI in Marketing</b>
+  <span class="sep">—</span>
+  Group Project
+  <span class="sep">·</span>
+  <span class="g2">Group 2</span>
+</div>
+
+<!-- ════════ HEADER ════════ -->
+<header>
+  <div class="cmd">forkly@marketing:~$ python main.py<b>▌</b></div>
+  <div class="eyebrow">AI Agent for Marketing · Group 2 · Claude Code</div>
+  <h1 class="display">Viral Moment<br><span class="hi">Hijacker</span></h1>
+  <p class="subtitle">A <b>multi-agent marketing system</b> that catches a viral trend, recruits the right creators, and ships a <span class="hl">full reactive campaign</span> before the moment passes.</p>
+  <div class="meta-row">
+    <span>DEMO BRAND <b>Forkly</b>, Gen Z meal kits</span>
+    <span>STACK <b>Claude Code · Python · Apify</b></span>
+    <span>RUNTIME <b>2 to 5 min per campaign</b></span>
+  </div>
+  <nav class="toc">
+    <a href="#brief"><span class="n">01</span><span class="t">Concept Brief</span></a>
+    <a href="#workflow"><span class="n">02</span><span class="t">How It Works</span></a>
+    <a href="#spec"><span class="n">03</span><span class="t">Technical Design</span></a>
+    <a href="#demo"><span class="n">04</span><span class="t">Forkly Demo Run</span></a>
+    <a href="#reflection"><span class="n">05</span><span class="t">Reflection</span></a>
+  </nav>
+</header>
+
+<!-- ════════ 01 CONCEPT BRIEF ════════ -->
+<section id="brief">
+  <div class="eyebrow">Deliverable 1</div>
+  <h2 class="display"><span class="num">01</span>Agent Concept Brief</h2>
+
+  <h3><span class="tick">▸</span> The marketing problem</h3>
+  <p>When a food trend blows up on TikTok, the window to join it is measured in <span class="hl">hours, not days</span>. The manual workflow (spot the trend, research creators, write outreach, draft a post, email customers) takes a team days. By then, the audience has moved on.</p>
+  <p>The real bottleneck is <span class="key">speed of coordination</span>: every step is easy on its own, but chaining them fast enough is not. This agent runs the whole chain automatically.</p>
+
+  <h3><span class="tick">▸</span> Target user</h3>
+  <p><b>Small social and influencer marketing teams</b> (1 to 3 people) at consumer brands chasing Gen Z and millennial audiences. The agent works for any brand in a category where viral content is frequent enough to be worth monitoring — food, beauty, fitness, fashion, and beyond.</p>
+  <p>Our demo brand is <span class="key">Forkly</span>, a fictional meal kit company with a casual, witty voice. Food was a <b>strategic category choice</b>: food content goes viral constantly, so almost any trend can be credibly converted into a Forkly kit.</p>
+
+  <span class="industry-label">Other industries this works for</span>
+  <div class="industry-grid">
+    <div class="ind"><div class="ind-icon">🍔</div><div class="ind-name">Food &amp; Beverage</div><div class="ind-note">Copycat recipes, restaurant drops, food challenges</div></div>
+    <div class="ind"><div class="ind-icon">💪</div><div class="ind-name">Fitness &amp; Wellness</div><div class="ind-note">Workout challenges, supplement trends, gym culture</div></div>
+    <div class="ind"><div class="ind-icon">💄</div><div class="ind-name">Beauty &amp; Skincare</div><div class="ind-note">Viral routines, dupes, product reviews going viral</div></div>
+    <div class="ind"><div class="ind-icon">👗</div><div class="ind-name">Fashion &amp; Apparel</div><div class="ind-note">Style challenges, outfit trends, resale moments</div></div>
+    <div class="ind"><div class="ind-icon">✈️</div><div class="ind-name">Travel &amp; Hospitality</div><div class="ind-note">Hidden gems, travel hacks, destination virality</div></div>
+    <div class="ind"><div class="ind-icon">🎮</div><div class="ind-name">Entertainment &amp; Gaming</div><div class="ind-note">Launch reactions, memes, community-driven content</div></div>
+  </div>
+
+  <h3><span class="tick">▸</span> From one command to a full campaign</h3>
+  <div class="term">
+    <div class="term-bar">
+      <div class="dots"><span class="dot fill"></span><span class="dot"></span><span class="dot"></span></div>
+      <span class="title">input → reasoning → output → value</span>
+    </div>
+    <div class="term-body flow-h">
+      <div class="fh-step">
+        <span class="eyebrow">Input</span>
+        <p><b>One command</b> with the brand profile: industry, name, description, platform, tone, and values. No human input during the run.</p>
+      </div>
+      <div class="fh-arrow">→</div>
+      <div class="fh-step">
+        <span class="eyebrow">Reasoning</span>
+        <p>A <span class="hb">Claude Opus orchestrator</span> decides like a strategist: which trend has the best opportunity, which angle feels <b>authentic, not forced</b>, and how to personalize each pitch.</p>
+      </div>
+      <div class="fh-arrow">→</div>
+      <div class="fh-step">
+        <span class="eyebrow">Output</span>
+        <p>A <b>complete campaign package</b>: ranked trend analysis, scored influencer shortlist, personalized DM per creator, brand post, hashtag strategy, 7-day calendar, and a customer email.</p>
+      </div>
+      <div class="fh-arrow">→</div>
+      <div class="fh-step">
+        <span class="eyebrow">Business value</span>
+        <p>Work that takes a team <b>1 to 2 days</b> is done in <span class="hg">2 to 5 minutes</span> for roughly <span class="hg">$0.05 to $0.20</span> in API cost per campaign.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3><span class="tick">▸</span> Why it supports decision-making</h3>
+  <p>The agent never just hands over copy. Every campaign ships with the <span class="key">reasoning behind it</span>: opportunity scores per trend, a <b>why-good-fit note</b> per creator, and an explicit brand-angle justification. A marketer can reject the strategy and still keep the research. It is a <b>decision-support package</b>, not a black box.</p>
+</section>
+
+<!-- ════════ 02 HOW IT WORKS ════════ -->
+<section id="workflow" class="pagebreak">
+  <div class="eyebrow">Deliverable 2 · Part A</div>
+  <h2 class="display"><span class="num">02</span>How It Works</h2>
+  <p class="section-sub">One orchestrator, three sub-agents, ten chained steps. The orchestrator receives <b>analyzed reports</b>, never raw scraped data, so its context stays focused on strategy.</p>
+
+  <h3><span class="tick">▸</span> Multi-agent architecture</h3>
+  <div class="arch">
+    <div class="boss">
+      <div class="role">Orchestrator</div>
+      <span class="chip model">claude-opus-4-8</span>
+      <div class="does">Strategy · brand angle · DM pitches · brand post · calendar</div>
+    </div>
+    <div class="stem"></div>
+    <div class="subs">
+      <div class="sub">
+        <div class="role">TrendResearchAgent</div>
+        <div class="tool">search_viral_trends</div>
+        <div class="does">Scrapes live platform data via Apify, ranks trends by <b>opportunity score</b> and suggests content angles.</div>
+        <span class="chip model">haiku-4-5</span>
+      </div>
+      <div class="sub">
+        <div class="role">InfluencerAgent</div>
+        <div class="tool">find_influencers</div>
+        <div class="does">Scrapes real creator profiles, scores each on <b>niche fit</b>, returns matches with a why-good-fit note.</div>
+        <span class="chip model">haiku-4-5</span>
+      </div>
+      <div class="sub">
+        <div class="role">EmailAgent</div>
+        <div class="tool">send_customer_email</div>
+        <div class="does">Writes the full customer email (subject, body, CTA) from trend context, then simulates the send.</div>
+        <span class="chip model">sonnet-4-6</span>
+      </div>
+    </div>
+  </div>
+  <p><b>Why split it?</b> Each agent has <span class="key">one job and the right model</span>. Haiku is fast and cheap for structured analysis. Sonnet writes better creative copy. Opus handles the multi-step strategic reasoning that ties it all together.</p>
+
+  <h3><span class="tick">▸</span> Agents are called on demand — not all at once</h3>
+  <p>Because each sub-agent is an <span class="key">independent API call</span>, the orchestrator decides which agents to invoke and when, based on what the campaign actually needs. This is the core reason three focused agents are more powerful than one big prompt: any subset can run in any order, without touching the others.</p>
+  <div class="term">
+    <div class="term-bar">
+      <div class="dots"><span class="dot fill"></span><span class="dot"></span><span class="dot"></span></div>
+      <span class="title">selective calling · Forkly examples</span>
+    </div>
+    <div class="term-body">
+      <ul class="pipe">
+        <li><span class="n">A</span><span class="step">PITCH ONLY</span><span class="desc">Team spots a trend manually → call <b>InfluencerAgent only</b>. Skip research and email. <i>Forkly: it's Saturday, the Cane's sauce moment is everywhere — just need a scored creator list in 30 seconds.</i> <span class="agent"><span class="chip model">haiku only</span></span></span></li>
+        <li><span class="n">B</span><span class="step">EMAIL BLAST</span><span class="desc">Trend is already picked → call <b>TrendResearchAgent + EmailAgent</b>. Skip influencer outreach. <i>Forkly: the Copycat Kit is already live, just needs a customer email to match the food moment.</i> <span class="agent"><span class="chip model">haiku + sonnet</span></span></span></li>
+        <li><span class="n">C</span><span class="step">FULL RUN</span><span class="desc">All three sub-agents fire in sequence: scrape trends → score creators → write email copy. <i>Forkly: standard reactive campaign from scratch.</i> <span class="agent"><span class="chip model">haiku + haiku + sonnet</span></span></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <h3><span class="tick">▸</span> The 10-step pipeline</h3>
+  <div class="term">
+    <div class="term-bar">
+      <div class="dots"><span class="dot fill"></span><span class="dot"></span><span class="dot"></span></div>
+      <span class="title">pipeline.run</span>
+    </div>
+    <div class="term-body">
+      <ul class="pipe">
+        <li><span class="n">01</span><span class="step">DISCOVER</span><span class="desc">TrendResearchAgent scrapes live data, ranks trends by opportunity <span class="agent"><span class="chip real">real</span></span></span></li>
+        <li><span class="n">02</span><span class="step">IDENTIFY</span><span class="desc">InfluencerAgent scores real creator profiles for niche fit <span class="agent"><span class="chip real">real</span></span></span></li>
+        <li><span class="n">03</span><span class="step">STRATEGIZE</span><span class="desc">Orchestrator picks the angle, <b>flags it if the fit feels forced</b> <span class="agent"><span class="chip real">real</span></span></span></li>
+        <li><span class="n">04</span><span class="step">HASHTAGS</span><span class="desc">Grouped strategy: broad + niche + branded + trend, with a caption formula <span class="agent"><span class="chip real">real</span></span></span></li>
+        <li><span class="n">05</span><span class="step">PERSONALIZE</span><span class="desc">Custom DM per creator referencing their <b>actual recent posts</b> <span class="agent"><span class="chip real">real</span></span></span></li>
+        <li><span class="n">06</span><span class="step">CREATE</span><span class="desc">Reactive brand post in Forkly's voice, platform-native format <span class="agent"><span class="chip real">real</span></span></span></li>
+        <li><span class="n">07</span><span class="step">CALENDAR</span><span class="desc">7 days: day 1 jumps on, days 2 to 5 sustain, days 6 to 7 convert <span class="agent"><span class="chip real">real</span></span></span></li>
+        <li><span class="n">08</span><span class="step">POST</span><span class="desc">Publishes the brand post to the social account <span class="agent"><span class="chip sim">simulated</span></span></span></li>
+        <li><span class="n">09</span><span class="step">EMAIL</span><span class="desc">EmailAgent writes subject, body and CTA, then sends to the list <span class="agent"><span class="chip sim">send simulated</span></span></span></li>
+        <li><span class="n">10</span><span class="step">SAVE</span><span class="desc">Full campaign package persisted to <span class="mono">output/</span> as timestamped JSON <span class="agent"><span class="chip real">real</span></span></span></li>
+      </ul>
+    </div>
+  </div>
+  <p>Publishing and email sending are simulated because real platform APIs require <b>verified business accounts and OAuth</b>. In production you would swap the simulation blocks in <span class="mono">tools.py</span> for real API calls. <span class="key">Everything else stays identical.</span></p>
+</section>
+
+<!-- ════════ 03 TECHNICAL DESIGN ════════ -->
+<section id="spec" class="pagebreak">
+  <div class="eyebrow">Deliverable 2 · Part B</div>
+  <h2 class="display"><span class="num">03</span>Technical Design &amp; Spec</h2>
+  <p class="section-sub">Built with <b>spec-driven development in Claude Code</b>: the behavior was defined in specifications first, then implemented and iterated against them.</p>
+
+  <h3><span class="tick">▸</span> The specification: CLAUDE.md</h3>
+  <p>The project's source of truth is a <span class="key">CLAUDE.md spec file</span> that Claude Code reads on every session. It pins down the <b>architecture</b>, the <b>10-step workflow</b>, the <b>multi-agent pattern</b>, and the Forkly brand context. This is how we kept Claude Code building <i>our</i> concept instead of drifting into generic output.</p>
+
+  <h3><span class="tick">▸</span> Prompt structure: the orchestrator</h3>
+  <p>The orchestrator's system prompt is built dynamically from the CLI input. It has four blocks: <span class="hb">Brand</span> (injected identity), <span class="hb">Sub-Agents</span> (who it can delegate to), <span class="hb">Mission</span> (the 10 ordered steps), and <span class="hb">Quality Rules</span>. Excerpt:</p>
+  <div class="term dark">
+    <div class="term-bar">
+      <div class="dots"><span class="dot fill"></span><span class="dot"></span><span class="dot"></span></div>
+      <span class="title">src/agent.py · system prompt (excerpt)</span>
+    </div>
+    <div class="term-body">
+<pre><span class="c"># Sub-Agents You Coordinate</span>
+You do not work alone. Three specialized AI agents handle
+the data-heavy and writing tasks:
+<span class="a">EmailAgent</span>: called via send_customer_email. Writes the full
+customer email and simulates sending it. Just provide
+trend_name, trend_summary, and brand_angle.
+<span class="g">Do NOT write the email yourself.</span>
+
+<span class="c"># Quality Rules</span>
+<span class="a">·</span> DMs must be warm, specific, and platform-native.
+  No "I came across your profile" openers.
+<span class="a">·</span> Authenticity over virality. If the angle feels
+  like a stretch, <span class="g">say so</span>.</pre>
+    </div>
+  </div>
+  <p>The key design move: the orchestrator is <b>explicitly told what not to do</b>. It never writes the email, never sees raw scraped data. Delegation is enforced in the prompt, not just hoped for.</p>
+
+  <h3><span class="tick">▸</span> Tool definitions</h3>
+  <p>Seven tools are defined as <span class="key">JSON schemas</span> in <span class="mono">src/tools.py</span>. Three dispatch to sub-agents (their own Claude API call), four run directly. Example:</p>
+  <div class="term dark">
+    <div class="term-bar">
+      <div class="dots"><span class="dot fill"></span><span class="dot"></span><span class="dot"></span></div>
+      <span class="title">src/tools.py · tool schema (excerpt)</span>
+    </div>
+    <div class="term-body">
+<pre>{
+  <span class="a">"name"</span>: "search_viral_trends",
+  <span class="a">"description"</span>: "Delegate to the TrendResearchAgent ...
+    scrapes live data via Apify, then analyzes and ranks
+    trends by opportunity score. Returns pre-analyzed
+    results with content angles, <span class="g">not raw hashtag data</span>.",
+  <span class="a">"input_schema"</span>: {
+    "industry":  { "type": "string" },
+    "timeframe": { "enum": ["last 24 hours",
+                   "last 48 hours", "this week"] }
+  }
+}</pre>
+    </div>
+  </div>
+
+  <h3><span class="tick">▸</span> Project structure &amp; documentation</h3>
+  <div class="term">
+    <div class="term-bar">
+      <div class="dots"><span class="dot fill"></span><span class="dot"></span><span class="dot"></span></div>
+      <span class="title">repo tree</span>
+    </div>
+    <div class="term-body">
+<pre>viral-moment-hijacker-agent/
+  main.py                <span class="c">CLI entry point</span>
+  CLAUDE.md              <span class="a">project spec, read by Claude Code</span>
+  src/
+    agent.py             <span class="c">orchestrator: prompt, agentic loop, dispatch</span>
+    tools.py             <span class="c">7 tool schemas + dispatcher</span>
+    config.py            <span class="c">model constants per agent</span>
+    agents/
+      trend_agent.py     <span class="c">scrape + analyze trends</span>
+      influencer_agent.py <span class="c">scrape + score creators</span>
+      email_agent.py     <span class="c">write + send customer email</span>
+  docs/agents/           <span class="a">11 per-step spec docs, 00 to 10</span>
+  output/                <span class="c">campaigns, calendars, hashtags, emails</span></pre>
+    </div>
+  </div>
+  <p>Every pipeline step has its own spec doc in <span class="mono">docs/agents/</span> covering the agent involved, its model, inputs, outputs, and trigger. These doubled as our <b>development checklist</b>.</p>
+
+  <h3><span class="tick">▸</span> Development process &amp; iterations</h3>
+  <ul class="timeline">
+    <li>
+      <span class="when">Iteration 1 · Ideation</span>
+      <div class="what">From generic to original</div>
+      <p>Early concepts felt like <b>single-function tools</b>, too simple and too isolated. We pushed until the concept chained many actions around <span class="key">one complete problem</span>: speed-to-trend. Food was chosen so the demo brand could credibly react to almost any trend.</p>
+    </li>
+    <li>
+      <span class="when">Iteration 2 · First build</span>
+      <div class="what">Redirecting Claude Code with CLAUDE.md</div>
+      <p>Claude Code's first outputs drifted generic. The fix: a detailed <span class="hb">CLAUDE.md spec</span> defining the exact 7-step pipeline plus the Forkly brand context, so every session built against <i>our</i> concept.</p>
+    </li>
+    <li>
+      <span class="when">Iteration 3 · Architecture upgrade</span>
+      <div class="what">Single agent → multi-agent</div>
+      <p>We split the monolithic agent into an <span class="hb">orchestrator + 3 sub-agents</span>, each with a focused prompt and the cheapest model that does the job well. The orchestrator now reasons over clean reports instead of raw scrapes.</p>
+    </li>
+    <li>
+      <span class="when">Iteration 4 · Hardening</span>
+      <div class="what">Standalone entry points + per-task docs</div>
+      <p>Each sub-agent got its own <b>CLI entry point</b> so it can be tested in isolation, and every step got a spec doc in <span class="mono">docs/agents/</span>. We also added JSON fallback handling after sub-agents occasionally prefixed their responses with text.</p>
+    </li>
+  </ul>
+</section>
+
+<!-- ════════ 04 FORKLY DEMO ════════ -->
+<section id="demo" class="pagebreak">
+  <div class="eyebrow">Deliverable 3</div>
+  <h2 class="display"><span class="num">04</span>Forkly Demo Run</h2>
+  <p class="section-sub">A real run from June 6, 2026. The agent found a live trend, picked an angle, and produced the entire campaign below <b>without human input</b>.</p>
+
+  <h3><span class="tick">▸</span> Sample input</h3>
+  <div class="term">
+    <div class="term-bar">
+      <div class="dots"><span class="dot fill"></span><span class="dot"></span><span class="dot"></span></div>
+      <span class="title">campaign configuration</span>
+    </div>
+    <div class="term-body kv">
+      <div><b>Brand</b> Forkly</div>
+      <div><b>Description</b> Meal kits for people who'd rather laugh than meal-prep</div>
+      <div><b>Industry</b> food</div>
+      <div><b>Platform</b> TikTok</div>
+      <div><b>Tone</b> casual, witty, food-obsessed</div>
+    </div>
+  </div>
+
+  <h3><span class="tick">▸</span> Step 1 · What the agent found</h3>
+  <p>The TrendResearchAgent scraped FoodTok and surfaced the <span class="hl">Raising Cane's "Cup of Sauce" copycat craze</span>: the top post had <b>66.3M views and 5.9M likes</b>, with creators racing to reverse-engineer the sauce at home. The agent identified the actionable hook itself: the <span class="key">DIY copycat angle</span>, perfect for a meal kit.</p>
+
+  <h3><span class="tick">▸</span> Step 3 · The brand angle it chose</h3>
+  <div class="quote">
+    <div class="who">brand_angle · written by the orchestrator</div>
+    "Stop paying drive-thru prices for a cup of sauce." Forkly hijacks the Cane's frenzy with a <b>Copycat Cane's Chicken Fingers + The Sauce kit</b>: recreate the viral dip and crispy tenders at home for a fraction of a combo meal. We ride the sauce obsession with a "we got food at home, but make it actually good" wink.
+  </div>
+  <p>Notice the angle hits Forkly's values (affordable, fun, recipe discovery, zero waste) <b>without pretending to be a mukbang channel</b>. That is the authenticity rule from the system prompt working.</p>
+
+  <h3><span class="tick">▸</span> Step 5 · A personalized DM pitch</h3>
+  <p>The InfluencerAgent shortlisted 3 real creators. Each DM references their <span class="key">actual content</span>. Example, for @mazerlazer_ (893K followers), whose bio is "we got food at home final boss":</p>
+  <div class="quote">
+    <div class="who">dm_pitch · @mazerlazer_ · 893K followers</div>
+    "'we got food at home final boss' is the funniest bio on this app and your Copycat McNuggets edit was genuinely so clean 😭 The whole internet is currently spiraling over the Cane's sauce cup, so naturally we made a Forkly kit for it... Feels tailor-made for your 'we got food at home' bit, except this time the food at home actually slaps. Can I send you one to play with? Total creative freedom, roast us if it deserves it."
+  </div>
+
+  <h3><span class="tick">▸</span> Step 6 · The reactive brand post</h3>
+  <div class="quote">
+    <div class="who">brand_post · TikTok caption</div>
+    POV: you cracked the code on The Sauce™ so you never have to pay $4 for a tiny cup again 🤫🍗 We're not saying Cane's sent us. We're saying your kitchen is about to. <b>Copycat Cane's Chicken Fingers + THE Sauce, now a kit.</b> Drop a 🍗 if you'd inhale this. <span class="mono" style="font-size:.78rem">#raisingcanes #copycatrecipe #foodtok #wegotfoodathome</span>
+  </div>
+
+  <h3><span class="tick">▸</span> Final output</h3>
+  <div class="stat-row">
+    <div class="stat"><div class="big">3</div><div class="lbl">personalized DM pitches</div></div>
+    <div class="stat"><div class="big">28,666</div><div class="lbl">subscribers emailed (sim.)</div></div>
+    <div class="stat"><div class="big">&lt; 5 min</div><div class="lbl">total runtime</div></div>
+  </div>
+  <p><b>Is this useful for a marketing team?</b> Yes, with review. The trend was real and live, the angle was on-brand, and the DMs referenced each creator's actual content, which is the part teams find most time-consuming to do well. A marketer would <span class="key">edit and approve</span> rather than start from zero, which is exactly the time saving the agent promises.</p>
+</section>
+
+<!-- ════════ 05 REFLECTION ════════ -->
+<section id="reflection" class="pagebreak">
+  <div class="eyebrow">Deliverable 4</div>
+  <h2 class="display"><span class="num">05</span>Reflection</h2>
+  <p class="section-sub">A post-campaign retro: what ran clean, what threw warnings, and what we would patch next.</p>
+
+  <h3><span class="tick">▸</span> What the agent does well</h3>
+  <div class="term">
+    <div class="term-bar">
+      <div class="dots"><span class="dot fill"></span><span class="dot"></span><span class="dot"></span></div>
+      <span class="title">run.log · strengths</span>
+    </div>
+    <div class="term-body log">
+      <div class="ok"><b>End-to-end chaining.</b> Ten steps from one command: research, scoring, strategy, copy, distribution, persistence. One complete problem, not one isolated task.</div>
+      <div class="ok"><b>Real data, real reasoning.</b> Trends and profiles are scraped live, so pitches reference a creator's actual posts, not placeholders.</div>
+      <div class="ok"><b>Right model per job.</b> Opus for strategy, Sonnet for copy, Haiku for analysis. Lower cost, faster runs, quality where it matters.</div>
+      <div class="ok"><b>Explainable output.</b> Opportunity scores, fit notes, and angle reasoning ship with every campaign. Marketers can audit, not just accept.</div>
+      <div class="ok"><b>Honesty guardrail.</b> The orchestrator flags forced trend-brand connections instead of writing inauthentic copy.</div>
+    </div>
+  </div>
+
+  <h3><span class="tick">▸</span> Limitations</h3>
+  <div class="term">
+    <div class="term-bar">
+      <div class="dots"><span class="dot fill"></span><span class="dot"></span><span class="dot"></span></div>
+      <span class="title">run.log · known issues</span>
+    </div>
+    <div class="term-body log">
+      <div class="warn"><b>Distribution is simulated.</b> Posting and email return fake confirmations; real APIs need verified business accounts.</div>
+      <div class="warn"><b>No human approval gate.</b> The pipeline runs fully autonomously, which no real company should accept for publishing.</div>
+      <div class="warn"><b>Scraping fragility.</b> Apify cold starts can hang, and data quality varies by platform and time of day.</div>
+      <div class="warn"><b>One-shot, not continuous.</b> A human still decides when to run it; it does not monitor 24/7.</div>
+      <div class="err"><b>Occasional JSON errors.</b> Sub-agents sometimes prefix their JSON with text, causing parse failures. The EmailAgent has a fallback; others need a re-run.</div>
+      <div class="warn"><b>No feedback loop.</b> The agent never learns whether its campaigns actually performed.</div>
+    </div>
+  </div>
+
+  <h3><span class="tick">▸</span> How it could be improved</h3>
+  <table>
+    <tr><th>Priority</th><th>Improvement</th><th>Why</th></tr>
+    <tr><td><span class="chip risk">P1</span></td><td><b>Human-in-the-loop approval</b> before steps 8 and 9</td><td>A marketer approves or edits the post, DMs, and email before anything ships.</td></tr>
+    <tr><td><span class="chip risk">P1</span></td><td><b>Brand-safety classifier</b> on trends</td><td>Rejects trends tied to tragedy, controversy, or health misinformation before strategy starts.</td></tr>
+    <tr><td><span class="chip sim">P2</span></td><td><b>Continuous monitoring</b></td><td>A scheduled job triggers the pipeline only when a trend crosses an opportunity threshold.</td></tr>
+    <tr><td><span class="chip sim">P2</span></td><td><b>Real distribution APIs</b></td><td>Swap the simulation blocks for Instagram Graph and Klaviyo calls.</td></tr>
+    <tr><td><span class="chip real">P3</span></td><td><b>Structured outputs + feedback loop</b></td><td>Eliminate JSON parse errors; feed engagement metrics back into trend scoring.</td></tr>
+  </table>
+
+  <h3><span class="tick">▸</span> Risks &amp; ethical considerations</h3>
+  <table>
+    <tr><th>Risk</th><th>Why it matters</th><th>Mitigation</th></tr>
+    <tr><td><span class="chip risk">disclosure</span></td><td>AI-written DMs read as personal. Creators who find out may feel <b>deceived</b>, damaging the very relationship the outreach builds.</td><td>Disclose AI assistance; a human sender stays accountable for every DM.</td></tr>
+    <tr><td><span class="chip risk">trend hijacking</span></td><td>Not every viral moment should be marketed on. Trends tied to <b>tragedy or conflict</b> make brand content offensive.</td><td>Brand-safety filter plus mandatory human review on sensitive topics.</td></tr>
+    <tr><td><span class="chip risk">scraped data</span></td><td>Creator profiles are collected <b>without consent</b>; scraping may breach platform terms even for public data.</td><td>Prefer official APIs in production; store only what outreach needs.</td></tr>
+    <tr><td><span class="chip risk">hallucination</span></td><td>A DM that "references" a post the model misread or invented <b>exposes the automation instantly</b>.</td><td>Ground pitches in verbatim scraped data; human spot-check before sending.</td></tr>
+    <tr><td><span class="chip risk">email consent</span></td><td>Trend-triggered emails could exceed the frequency subscribers consented to, risking <b>spam complaints and GDPR issues</b>.</td><td>Frequency caps, consent-based segments, one-click unsubscribe.</td></tr>
+  </table>
+
+  <h3><span class="tick">▸</span> Use in a real marketing context</h3>
+  <p>Deployed honestly, this agent is a <span class="hl">first-draft machine for the trend desk</span>, not an autonomous publisher. The realistic setup: it monitors continuously, and when a trend crosses the threshold it drops a complete draft campaign into the team's <b>review queue</b>.</p>
+  <p>The humans then do the two things the agent cannot: judge whether the brand <span class="key">should</span> join this conversation, and own the relationships with creators and customers. That split keeps the speed advantage while keeping <b>accountability with people</b>.</p>
+</section>
+
+<footer>
+  <span>Viral Moment Hijacker · Big Data &amp; AI in Marketing · Group 2 · 2026</span>
+  <span class="mono">campaign complete · exit code 0</span>
+</footer>
+
+</div>
+</body>
+</html>

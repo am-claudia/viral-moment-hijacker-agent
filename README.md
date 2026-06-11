@@ -95,6 +95,18 @@ viral-moment-hijacker-agent/
 │       ├── trend_agent.py       TrendResearchAgent — scrape + analyze trends
 │       ├── influencer_agent.py  InfluencerAgent — scrape + score creators
 │       └── email_agent.py       EmailAgent — write + send customer email
+├── docs/agents/             Per-step documentation for each pipeline task
+│   ├── 00_orchestrator.md       Orchestrator design, agentic loop, system prompt
+│   ├── 01_discover_trends.md    Step 1: search_viral_trends + TrendResearchAgent
+│   ├── 02_identify_influencers.md   Step 2: find_influencers + InfluencerAgent
+│   ├── 03_strategize.md         Step 3: brand angle selection (pure reasoning)
+│   ├── 04_hashtag_strategy.md   Step 4: generate_hashtag_strategy
+│   ├── 05_personalize_dms.md    Step 5: DM pitch writing (pure reasoning)
+│   ├── 06_create_brand_post.md  Step 6: brand post creation (pure reasoning)
+│   ├── 07_content_calendar.md   Step 7: generate_content_calendar
+│   ├── 08_post_social_media.md  Step 8: post_to_social_media (simulated)
+│   ├── 09_customer_email.md     Step 9: send_customer_email + EmailAgent
+│   └── 10_save_campaign.md      Step 10: save_campaign_results
 ├── output/
 │   ├── campaigns/           Full campaign JSON, one file per run
 │   ├── calendars/           7-day content calendar as plain text
@@ -276,6 +288,39 @@ Claude is reasoning... (step 3)        ← Orchestrator picks brand angle + writ
 ── Campaign Complete ───────────────────────────────────
 
 ✓ Saved to output/campaigns/campaign_activewear_co_20260610_142301.json
+
+╭─ Campaign Summary ──────────────────────────────────╮
+│ 25-Day Gym Streak Challenge                         │
+│                                                     │
+│ Brand angle: Be the brand that makes the streak     │
+│ physically sustainable — not just mentally...       │
+╰─────────────────────────────────────────────────────╯
+
+✓ 3 influencer DM pitch(es) generated
+
+╭─ DM Pitch — Jordan Lee ─────────────────────────────╮
+│ @jordanlifts  ·  210K followers                     │
+│                                                     │
+│ Hey Jordan! The progression shots in your Day 18    │
+│ reel are exactly the kind of content...             │
+╰─────────────────────────────────────────────────────╯
+
+╭─ Hashtag Strategy ──────────────────────────────────╮
+│ Broad:   #fitness #gym #workout                     │
+│ Niche:   #gymstreak #fitnessjourney #activewear     │
+│ Brand:   #ActiveWearCo                              │
+│ Trend:   #25DayStreak #StreakChallenge              │
+╰─────────────────────────────────────────────────────╯
+
+╭─ 7-Day Content Calendar ────────────────────────────╮
+│ Day 1     Reel        6:00 PM   Day 25 looks diff…  │
+│ Day 2     Story       9:00 AM   Behind the streak…  │
+│ ...                                                 │
+╰─────────────────────────────────────────────────────╯
+
+Distribution
+  ✓ Posted to Instagram: https://www.instagram.com/p/abc123/
+  ✓ Email sent to 18,400 subscribers: "Your streak deserves gear that keeps up"
 ```
 
 **Total runtime: 2–5 minutes.** Most of the time is Apify scraping (~30–60s per step).

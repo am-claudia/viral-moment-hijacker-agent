@@ -1,25 +1,44 @@
 ---
+layout: default
 title: Viral Moment Hijacker
-layout: home
 ---
 
 # Viral Moment Hijacker
 
-An AI agent that monitors what's going viral in any industry, identifies the right creators to partner with, writes personalized outreach, publishes a reactive brand post, and emails your customers — all from a single command.
+> An AI agent that monitors what's going viral in any industry, finds the right creators, writes personalized outreach, publishes a reactive brand post, and emails your customers — all from a single command.
 
 ---
 
 ## The problem it solves
 
-When a trend blows up, the brands that win are the ones that respond within hours — not days. The manual workflow is too slow: monitor platforms → find relevant creators → research each one → write personalized outreach → draft a post → notify your customers. By the time all of that is done, the moment has passed.
+When a trend blows up, brands that win respond within **hours, not days**. The manual workflow is too slow — by the time you've monitored platforms, found creators, researched each one, written outreach, drafted a post, and notified customers, the moment has passed.
 
-This agent runs that entire workflow in one automated pipeline.
+This agent runs the entire workflow in one automated pipeline.
 
 ---
 
-## How it works
+## Multi-agent architecture
 
-| Step | Task | Agent |
+```
+Claude Opus 4.8 (Orchestrator)
+    │
+    ├── search_viral_trends  →  TrendResearchAgent  (Haiku)
+    │                           Scrapes Apify live data, ranks trends by opportunity score
+    │
+    ├── find_influencers     →  InfluencerAgent     (Haiku)
+    │                           Scrapes creator profiles, scores each on niche fit
+    │
+    └── send_customer_email  →  EmailAgent          (Sonnet)
+                                Writes the full email from trend context, simulates send
+```
+
+The orchestrator never writes the email itself — it delegates with just trend context and gets back a confirmation. Same for trends and influencers: it receives analyzed reports, not raw scraped data, so it can focus entirely on strategy.
+
+---
+
+## 10-step pipeline
+
+| # | Task | Who does it |
 |---|---|---|
 | 1 | Scrape live trending content | TrendResearchAgent (Haiku) |
 | 2 | Score real creator profiles | InfluencerAgent (Haiku) |
@@ -34,23 +53,9 @@ This agent runs that entire workflow in one automated pipeline.
 
 ---
 
-## Multi-agent architecture
-
-```
-Claude Opus 4.8 (Orchestrator)
-    │
-    ├── search_viral_trends  →  TrendResearchAgent  (claude-haiku-4-5)
-    ├── find_influencers     →  InfluencerAgent     (claude-haiku-4-5)
-    └── send_customer_email  →  EmailAgent          (claude-sonnet-4-6)
-```
-
-Each sub-agent is its own Claude API call with a focused system prompt and the right model for its job. The orchestrator receives pre-analyzed reports — not raw data — so it can focus entirely on strategy.
-
----
-
 ## Agent docs
 
-- [Orchestrator](agents/00_orchestrator.md)
+- [Orchestrator](agents/00_orchestrator.md) — agentic loop, system prompt, tool delegation
 - [Task 1 — Discover Trends](agents/01_discover_trends.md)
 - [Task 2 — Identify Influencers](agents/02_identify_influencers.md)
 - [Task 3 — Strategize](agents/03_strategize.md)
@@ -78,4 +83,4 @@ python main.py \
   --tone "casual, witty"
 ```
 
-Full setup instructions in the [README](https://github.com/am-claudia/viral-moment-hijacker-agent#readme).
+View the full setup guide on [GitHub](https://github.com/am-claudia/viral-moment-hijacker-agent#readme).

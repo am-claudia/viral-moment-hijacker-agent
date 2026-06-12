@@ -6,8 +6,7 @@
 |---|---|
 | **File** | `src/agent.py` |
 | **Class** | `ViralMomentHijacker` |
-| **Model** | `claude-opus-4-8` with adaptive thinking |
-| **Thinking** | `{"type": "adaptive"}` + `output_config: {"effort": "high"}` |
+| **Model** | `gemini-2.5-pro` with built-in reasoning |
 | **Max iterations** | 15 |
 
 ---
@@ -46,20 +45,21 @@ It does **not** do data collection or email writing — those are delegated to s
 
 ```python
 for iteration in range(MAX_ITERATIONS):          # max 15 turns
-    response = client.messages.create(...)        # call Opus
+    response = client.models.generate_content(...)  # call Gemini
 
-    if response.stop_reason == "end_turn":
-        break                                     # Claude is done
+    tool_calls = [p for p in response.parts if p.function_call]
 
-    if response.stop_reason == "tool_use":
-        for block in response.content:            # execute each tool
-            result = execute_tool(block.name, block.input, ...)
-            tool_results.append(result)
+    if not tool_calls:
+        break                                     # Gemini is done
 
-        messages.append(tool_results)             # feed results back
+    for part in tool_calls:                       # execute each tool
+        result = execute_tool(part.function_call.name, ...)
+        function_responses.append(result)
+
+    messages.append(function_responses)           # feed results back
 ```
 
-The loop runs until Claude stops calling tools (`end_turn`) or the 15-iteration safety cap is hit.
+The loop runs until Gemini stops calling tools (no function_call parts) or the 15-iteration safety cap is hit.
 
 ---
 
@@ -74,14 +74,14 @@ The Orchestrator's system prompt (built in `_system_prompt()`) contains:
 
 ---
 
-## Why Opus with Adaptive Thinking?
+## Why Gemini 2.5 Pro?
 
 The Orchestrator handles tasks that require multi-step reasoning in a single response:
 - Evaluating 3 trends and picking the most authentic angle
 - Writing 3 distinct DM pitches for different creator personalities
 - Producing a 7-day campaign arc with platform-specific formats
 
-Adaptive thinking lets Opus decide how much to reason per step — heavier on strategy, lighter on formatting. `effort: "high"` keeps quality consistent throughout the full pipeline.
+Gemini 2.5 Pro includes built-in extended thinking that activates automatically for complex reasoning steps, keeping quality consistent throughout the full pipeline.
 
 ---
 

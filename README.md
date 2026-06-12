@@ -8,7 +8,7 @@ An AI agent that monitors what's going viral in any industry, identifies the rig
 
 When a trend blows up, the brands that win are the ones that respond within hours — not days. But the manual workflow is too slow: monitor platforms → find relevant creators → research each one → write personalized outreach → draft a post → notify your customers. By the time all of that is done, the moment has passed and the audience has moved on.
 
-This agent runs that entire workflow in one automated pipeline. It scrapes live trend data, evaluates real creator profiles, reasons about the right brand angle, and produces ready-to-use content — all driven by a Claude Opus orchestrator that makes strategic decisions the same way a human strategist would.
+This agent runs that entire workflow in one automated pipeline. It scrapes live trend data, evaluates real creator profiles, reasons about the right brand angle, and produces ready-to-use content — all driven by a Gemini Pro orchestrator that makes strategic decisions the same way a human strategist would.
 
 **For marketers, this means:**
 - Catching viral moments in the same news cycle they happen
@@ -57,28 +57,28 @@ This agent runs that entire workflow in one automated pipeline. It scrapes live 
 
 ## Multi-agent architecture
 
-The agent is built as an orchestrator that coordinates three specialized sub-agents. Each sub-agent is its own Claude API call with a focused system prompt and the right model for its job.
+The agent is built as an orchestrator that coordinates three specialized sub-agents. Each sub-agent is its own Gemini API call with a focused system prompt and the right model for its job.
 
 ```
-Claude Opus 4.8 (Orchestrator)
+Gemini 2.5 Pro (Orchestrator)
     Handles: strategy, brand angle, DM pitches, brand post, content calendar
     │
-    ├── search_viral_trends  →  TrendResearchAgent  (claude-haiku-4-5)
+    ├── search_viral_trends  →  TrendResearchAgent  (gemini-2.5-flash)
     │                           Scrapes Apify live data, then analyzes and ranks
     │                           trends by opportunity score + suggests content angles
     │
-    ├── find_influencers     →  InfluencerAgent     (claude-haiku-4-5)
+    ├── find_influencers     →  InfluencerAgent     (gemini-2.5-flash)
     │                           Scrapes Apify creator profiles, scores each on
     │                           niche fit, returns ranked matches with why_good_fit
     │
-    └── send_customer_email  →  EmailAgent          (claude-sonnet-4-6)
+    └── send_customer_email  →  EmailAgent          (gemini-2.5-pro)
                                 Writes the full email (subject, body, CTA)
                                 from trend context, then simulates sending
 ```
 
 The orchestrator never writes the email itself — it delegates to the EmailAgent with just the trend name, trend summary, and brand angle. The EmailAgent handles all copywriting. Same pattern for trends and influencers: the orchestrator receives analyzed reports, not raw scraped data, so it can focus on strategy.
 
-**Why this matters:** Each agent has one job and the right model for it. Haiku is fast and cheap for structured data analysis. Sonnet produces better creative copy. Opus handles the multi-step strategic reasoning that ties everything together.
+**Why this matters:** Each agent has one job and the right model for it. Flash is fast and cheap for structured data analysis. Pro handles the multi-step strategic reasoning and creative writing that ties everything together.
 
 ---
 
@@ -135,7 +135,7 @@ python --version
 pip install -r requirements.txt
 ```
 
-This installs: `anthropic`, `python-dotenv`, `rich`, `apify-client`.
+This installs: `google-genai`, `python-dotenv`, `rich`, `apify-client`.
 
 ### 3. Create your `.env` file
 
@@ -149,17 +149,17 @@ Then open `.env` and fill in your keys. Instructions for each key are in the nex
 
 ## API keys
 
-### Anthropic (required)
+### Google Gemini (required)
 
-Powers all Claude models in the pipeline (Opus, Sonnet, Haiku).
+Powers all Gemini models in the pipeline (2.5 Pro and 2.5 Flash).
 
-1. Go to [console.anthropic.com](https://console.anthropic.com)
-2. Sign in → **API Keys** in the left sidebar → **Create Key**
-3. Copy the key (starts with `sk-ant-api03-...`)
+1. Go to [aistudio.google.com](https://aistudio.google.com)
+2. Sign in → click **Get API key** → **Create API key**
+3. Copy the key (starts with `AIza...`)
 4. Paste it in `.env`:
 
 ```env
-ANTHROPIC_API_KEY=sk-ant-api03-...
+GEMINI_API_KEY=AIza...
 ```
 
 ### Apify (required)
@@ -180,7 +180,7 @@ APIFY_API_TOKEN=apify_api_...
 ### Final `.env` file
 
 ```env
-ANTHROPIC_API_KEY=sk-ant-api03-...
+GEMINI_API_KEY=AIza...
 APIFY_API_TOKEN=apify_api_...
 ```
 
@@ -254,7 +254,7 @@ Campaign Configuration
 
 ── Starting Pipeline ──────────────────────────────────
 
-Claude is reasoning... (step 1)
+Gemini is reasoning... (step 1)
 
 → Tool: search_viral_trends
   { "industry": "fitness", "timeframe": "last 24 hours" }
@@ -266,7 +266,7 @@ Claude is reasoning... (step 1)
   Executing find_influencers...        ← InfluencerAgent scrapes + scores creators
   ✓ Done
 
-Claude is reasoning... (step 3)        ← Orchestrator picks brand angle + writes DMs + post
+Gemini is reasoning... (step 3)        ← Orchestrator picks brand angle + writes DMs + post
 
 → Tool: generate_hashtag_strategy
   ✓ Done
@@ -382,7 +382,7 @@ The full customer email the EmailAgent wrote, saved as plain text.
 |---|---|---|
 | Trend discovery | **Real** | Live data scraped from TikTok / Instagram / LinkedIn via Apify |
 | Influencer profiles | **Real** | Scraped live — real follower counts, bios, recent posts |
-| Strategy, DMs, brand post | **Real** | Claude Opus reasons through all of it |
+| Strategy, DMs, brand post | **Real** | Gemini Pro reasons through all of it |
 | Customer email | **Real** | EmailAgent writes original copy from your brand context |
 | Publishing to social media | **Simulated** | Returns a fake post URL; no platform account needed |
 | Sending the customer email | **Simulated** | Saves a preview to `output/emails/`; no email provider needed |
@@ -393,6 +393,9 @@ Publishing and email sending are simulated because real APIs (Instagram Graph AP
 
 ## Troubleshooting
 
+**`GEMINI_API_KEY not set`**  
+Add your Gemini API key to `.env`. See the API keys section above.
+
 **`APIFY_API_TOKEN not set`**  
 Add your Apify token to `.env`. See the API keys section above.
 
@@ -400,10 +403,10 @@ Add your Apify token to `.env`. See the API keys section above.
 Run `pip install -r requirements.txt`.
 
 **Agent stops mid-run with a billing error**  
-Check your Anthropic account balance at [console.anthropic.com](https://console.anthropic.com). A full campaign run uses Opus (orchestrator), Sonnet (email), and Haiku (trends + influencers) — typically $0.05–0.20 total.
+Check your Google AI Studio quota at [aistudio.google.com](https://aistudio.google.com). A full campaign run uses Gemini 2.5 Pro (orchestrator + email) and 2.5 Flash (trends + influencers).
 
 **Apify run hangs for more than 2 minutes**  
 Apify occasionally has slow cold starts. Cancel and re-run — the second attempt is usually fast.
 
 **`json.JSONDecodeError` from a sub-agent**  
-A sub-agent occasionally returns non-JSON text if Claude prefixes its response. The EmailAgent has a fallback that surfaces the raw response. Re-running usually resolves it.
+A sub-agent occasionally returns non-JSON text if Gemini prefixes its response. The EmailAgent has a fallback that surfaces the raw response. Re-running usually resolves it.

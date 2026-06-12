@@ -208,12 +208,12 @@
 <!-- ════════ HEADER ════════ -->
 <header>
   <div class="cmd">forkly@marketing:~$ python main.py<b>▌</b></div>
-  <div class="eyebrow">AI Agent for Marketing · Group 2 · Claude Code</div>
+  <div class="eyebrow">AI Agent for Marketing · Group 2 · Gemini API</div>
   <h1 class="display">Viral Moment<br><span class="hi">Hijacker</span></h1>
   <p class="subtitle">A <b>multi-agent marketing system</b> that catches a viral trend, recruits the right creators, and ships a <span class="hl">full reactive campaign</span> before the moment passes.</p>
   <div class="meta-row">
     <span>DEMO BRAND <b>Forkly</b>, Gen Z meal kits</span>
-    <span>STACK <b>Claude Code · Python · Apify</b></span>
+    <span>STACK <b>Gemini API · Python · Apify</b></span>
     <span>RUNTIME <b>2 to 5 min per campaign</b></span>
   </div>
   <nav class="toc">
@@ -262,7 +262,7 @@
       <div class="fh-arrow">→</div>
       <div class="fh-step">
         <span class="eyebrow">Reasoning</span>
-        <p>A <span class="hb">Claude Opus orchestrator</span> decides like a strategist: which trend has the best opportunity, which angle feels <b>authentic, not forced</b>, and how to personalize each pitch.</p>
+        <p>A <span class="hb">Gemini 2.5 Flash orchestrator</span> decides like a strategist: which trend has the best opportunity, which angle feels <b>authentic, not forced</b>, and how to personalize each pitch.</p>
       </div>
       <div class="fh-arrow">→</div>
       <div class="fh-step">
@@ -272,7 +272,7 @@
       <div class="fh-arrow">→</div>
       <div class="fh-step">
         <span class="eyebrow">Business value</span>
-        <p>Work that takes a team <b>1 to 2 days</b> is done in <span class="hg">2 to 5 minutes</span> for roughly <span class="hg">$0.05 to $0.20</span> in API cost per campaign.</p>
+        <p>Work that takes a team <b>1 to 2 days</b> is done in <span class="hg">2 to 5 minutes</span> for roughly <span class="hg">$0.01 to $0.05</span> in API cost per campaign (Gemini 2.5 Flash pricing).</p>
       </div>
     </div>
   </div>
@@ -291,7 +291,7 @@
   <div class="arch">
     <div class="boss">
       <div class="role">Orchestrator</div>
-      <span class="chip model">claude-opus-4-8</span>
+      <span class="chip model">gemini-2.5-flash</span>
       <div class="does">Strategy · brand angle · DM pitches · brand post · calendar</div>
     </div>
     <div class="stem"></div>
@@ -300,23 +300,23 @@
         <div class="role">TrendResearchAgent</div>
         <div class="tool">search_viral_trends</div>
         <div class="does">Scrapes live platform data via Apify, ranks trends by <b>opportunity score</b> and suggests content angles.</div>
-        <span class="chip model">haiku-4-5</span>
+        <span class="chip model">gemini-2.5-flash</span>
       </div>
       <div class="sub">
         <div class="role">InfluencerAgent</div>
         <div class="tool">find_influencers</div>
         <div class="does">Scrapes real creator profiles, scores each on <b>niche fit</b>, returns matches with a why-good-fit note.</div>
-        <span class="chip model">haiku-4-5</span>
+        <span class="chip model">gemini-2.5-flash</span>
       </div>
       <div class="sub">
         <div class="role">EmailAgent</div>
         <div class="tool">send_customer_email</div>
         <div class="does">Writes the full customer email (subject, body, CTA) from trend context, then simulates the send.</div>
-        <span class="chip model">sonnet-4-6</span>
+        <span class="chip model">gemini-2.5-flash</span>
       </div>
     </div>
   </div>
-  <p><b>Why split it?</b> Each agent has <span class="key">one job and the right model</span>. Haiku is fast and cheap for structured analysis. Sonnet writes better creative copy. Opus handles the multi-step strategic reasoning that ties it all together.</p>
+  <p><b>Why split it?</b> Each agent has <span class="key">one job and a focused context</span>. All three sub-agents use the same model (Gemini 2.5 Flash) — one API key, one provider — while separation of concerns keeps each agent's system prompt minimal and its output predictable.</p>
 
   <h3><span class="tick">▸</span> Agents are called on demand — not all at once</h3>
   <p>Because each sub-agent is an <span class="key">independent API call</span>, the orchestrator decides which agents to invoke and when, based on what the campaign actually needs. This is the core reason three focused agents are more powerful than one big prompt: any subset can run in any order, without touching the others.</p>
@@ -327,9 +327,9 @@
     </div>
     <div class="term-body">
       <ul class="pipe">
-        <li><span class="n">A</span><span class="step">PITCH ONLY</span><span class="desc">Team spots a trend manually → call <b>InfluencerAgent only</b>. Skip research and email. <i>Forkly: it's Saturday, the Cane's sauce moment is everywhere — just need a scored creator list in 30 seconds.</i> <span class="agent"><span class="chip model">haiku only</span></span></span></li>
-        <li><span class="n">B</span><span class="step">EMAIL BLAST</span><span class="desc">Trend is already picked → call <b>TrendResearchAgent + EmailAgent</b>. Skip influencer outreach. <i>Forkly: the Copycat Kit is already live, just needs a customer email to match the food moment.</i> <span class="agent"><span class="chip model">haiku + sonnet</span></span></span></li>
-        <li><span class="n">C</span><span class="step">FULL RUN</span><span class="desc">All three sub-agents fire in sequence: scrape trends → score creators → write email copy. <i>Forkly: standard reactive campaign from scratch.</i> <span class="agent"><span class="chip model">haiku + haiku + sonnet</span></span></span></li>
+        <li><span class="n">A</span><span class="step">PITCH ONLY</span><span class="desc">Team spots a trend manually → call <b>InfluencerAgent only</b>. Skip research and email. <i>Forkly: it's Saturday, the Cane's sauce moment is everywhere — just need a scored creator list in 30 seconds.</i> <span class="agent"><span class="chip model">flash × 1</span></span></span></li>
+        <li><span class="n">B</span><span class="step">EMAIL BLAST</span><span class="desc">Trend is already picked → call <b>TrendResearchAgent + EmailAgent</b>. Skip influencer outreach. <i>Forkly: the Copycat Kit is already live, just needs a customer email to match the food moment.</i> <span class="agent"><span class="chip model">flash × 2</span></span></span></li>
+        <li><span class="n">C</span><span class="step">FULL RUN</span><span class="desc">All three sub-agents fire in sequence: scrape trends → score creators → write email copy. <i>Forkly: standard reactive campaign from scratch.</i> <span class="agent"><span class="chip model">flash × 3</span></span></span></li>
       </ul>
     </div>
   </div>
@@ -393,7 +393,7 @@ trend_name, trend_summary, and brand_angle.
   <p>The key design move: the orchestrator is <b>explicitly told what not to do</b>. It never writes the email, never sees raw scraped data. Delegation is enforced in the prompt, not just hoped for.</p>
 
   <h3><span class="tick">▸</span> Tool definitions</h3>
-  <p>Seven tools are defined as <span class="key">JSON schemas</span> in <span class="mono">src/tools.py</span>. Three dispatch to sub-agents (their own Claude API call), four run directly. Example:</p>
+  <p>Seven tools are defined as <span class="key">JSON schemas</span> in <span class="mono">src/tools.py</span>. Three dispatch to sub-agents (their own Gemini API call), four run directly. Example:</p>
   <div class="term dark">
     <div class="term-bar">
       <div class="dots"><span class="dot fill"></span><span class="dot"></span><span class="dot"></span></div>
@@ -468,7 +468,7 @@ trend_name, trend_summary, and brand_angle.
 <section id="demo" class="pagebreak">
   <div class="eyebrow">Deliverable 3</div>
   <h2 class="display"><span class="num">04</span>Forkly Demo Run</h2>
-  <p class="section-sub">A real run from June 6, 2026. The agent found a live trend, picked an angle, and produced the entire campaign below <b>without human input</b>.</p>
+  <p class="section-sub">A real run from <b>June 12, 2026</b> using the full multi-agent system. The Gemini 2.5 Flash orchestrator coordinated all three sub-agents, scraped live TikTok data via Apify, and produced the campaign below <b>without human input</b>.</p>
 
   <h3><span class="tick">▸</span> Sample input</h3>
   <div class="term">
@@ -486,35 +486,43 @@ trend_name, trend_summary, and brand_angle.
   </div>
 
   <h3><span class="tick">▸</span> Step 1 · What the agent found</h3>
-  <p>The TrendResearchAgent scraped FoodTok and surfaced the <span class="hl">Raising Cane's "Cup of Sauce" copycat craze</span>: the top post had <b>66.3M views and 5.9M likes</b>, with creators racing to reverse-engineer the sauce at home. The agent identified the actionable hook itself: the <span class="key">DIY copycat angle</span>, perfect for a meal kit.</p>
+  <p>The TrendResearchAgent scraped FoodTok via Apify and surfaced <span class="hl">Cloud Bread</span>: a visually stunning, fluffy bread made with egg whites, sugar, and cornstarch — highly shareable due to its unique texture and pastel aesthetic. Creators were experimenting with colors and flavors, turning kitchen experiments into must-watch TikTok content. The agent identified the actionable hook: the <span class="key">"make the trend yourself" angle</span>, a natural fit for a recipe-discovery brand like Forkly.</p>
 
   <h3><span class="tick">▸</span> Step 3 · The brand angle it chose</h3>
   <div class="quote">
     <div class="who">brand_angle · written by the orchestrator</div>
-    "Stop paying drive-thru prices for a cup of sauce." Forkly hijacks the Cane's frenzy with a <b>Copycat Cane's Chicken Fingers + The Sauce kit</b>: recreate the viral dip and crispy tenders at home for a fraction of a combo meal. We ride the sauce obsession with a "we got food at home, but make it actually good" wink.
+    Forkly makes experimenting with viral trends like <b>Cloud Bread</b> super easy and fun. Get all the pre-portioned ingredients to create your own colorful, fluffy masterpieces without the fuss of ingredient hunting. It's about bringing the joy and creativity of TikTok right into your kitchen with <b>minimal effort, maximum fun</b>.
   </div>
-  <p>Notice the angle hits Forkly's values (affordable, fun, recipe discovery, zero waste) <b>without pretending to be a mukbang channel</b>. That is the authenticity rule from the system prompt working.</p>
+  <p>The angle hits Forkly's core values (accessible, fun, recipe discovery) <b>without forcing a connection</b>. The authenticity guardrail worked: the agent leaned into what Forkly actually is — a kit brand that removes friction — rather than pretending to be a food review channel.</p>
 
-  <h3><span class="tick">▸</span> Step 5 · A personalized DM pitch</h3>
-  <p>The InfluencerAgent shortlisted 3 real creators. Each DM references their <span class="key">actual content</span>. Example, for @mazerlazer_ (893K followers), whose bio is "we got food at home final boss":</p>
+  <h3><span class="tick">▸</span> Step 5 · Personalized DM pitches</h3>
+  <p>The InfluencerAgent scraped and scored 3 real TikTok creators. Each DM references their <span class="key">actual content style and recent posts</span>. Two examples:</p>
   <div class="quote">
-    <div class="who">dm_pitch · @mazerlazer_ · 893K followers</div>
-    "'we got food at home final boss' is the funniest bio on this app and your Copycat McNuggets edit was genuinely so clean 😭 The whole internet is currently spiraling over the Cane's sauce cup, so naturally we made a Forkly kit for it... Feels tailor-made for your 'we got food at home' bit, except this time the food at home actually slaps. Can I send you one to play with? Total creative freedom, roast us if it deserves it."
+    <div class="who">dm_pitch · @bakewithme_official · 1.2M followers</div>
+    "Hey @bakewithme_official! OBSESSED with your pastel rainbow cloud bread tutorial — seriously gorgeous 😍 Your eye for detail and aesthetic is spot on. We're Forkly, a fun meal kit brand, and we think our kits would be perfect for your audience who loves creating beautiful dishes with ease. Imagine a Forkly Cloud Bread kit with pre-portioned ingredients to get those perfect swirls every time! Would you be open to chatting about a potential collab?"
+  </div>
+  <div class="quote">
+    <div class="who">dm_pitch · @kitchenchaos_jenna · 550K followers</div>
+    "Jenna, your Cloud Bread fail-to-success video cracked me up — totally relatable 😂 That's exactly the vibe we love at Forkly. We're all about making cooking fun, even when things get a little chaotic (or fluffy!). How cool would it be to try a Forkly Cloud Bread kit? All the ingredients sorted, so you can focus on the fun and less on the fuss. Let's chat about bringing some Forkly joy to your kitchen chaos!"
   </div>
 
-  <h3><span class="tick">▸</span> Step 6 · The reactive brand post</h3>
+  <h3><span class="tick">▸</span> Step 9 · The customer email</h3>
+  <p>The EmailAgent wrote a complete email — subject, body, and CTA — tied directly to the Cloud Bread trend, then saved a preview to <span class="mono">output/emails/</span> and simulated the send:</p>
   <div class="quote">
-    <div class="who">brand_post · TikTok caption</div>
-    POV: you cracked the code on The Sauce™ so you never have to pay $4 for a tiny cup again 🤫🍗 We're not saying Cane's sent us. We're saying your kitchen is about to. <b>Copycat Cane's Chicken Fingers + THE Sauce, now a kit.</b> Drop a 🍗 if you'd inhale this. <span class="mono" style="font-size:.78rem">#raisingcanes #copycatrecipe #foodtok #wegotfoodathome</span>
+    <div class="who">customer_email · subject: "Fluffy, colorful, viral. (Yes, you can!)" · sent via EmailAgent</div>
+    Your FYP has been full of cloud bread lately — those gorgeous pastel swirls, that impossibly fluffy texture. We've been watching too, and we did what we do best: we turned the moment into a kit.<br><br>
+    <b>Cloud Bread Kit by Forkly</b> — pre-portioned egg whites, sugar, and cornstarch. Pick your color, add your flavor, and get those Instagram-worthy swirls in under 30 minutes. No ingredient hunting, no wasted half-bags of cream of tartar.<br><br>
+    The trend window is short. Add it to your next box before Sunday cutoff.<br><br>
+    <i>Make it fluffy 🌤️ — Team Forkly</i>
   </div>
 
   <h3><span class="tick">▸</span> Final output</h3>
   <div class="stat-row">
     <div class="stat"><div class="big">3</div><div class="lbl">personalized DM pitches</div></div>
-    <div class="stat"><div class="big">28,666</div><div class="lbl">subscribers emailed (sim.)</div></div>
+    <div class="stat"><div class="big">3</div><div class="lbl">sub-agents coordinated</div></div>
     <div class="stat"><div class="big">&lt; 5 min</div><div class="lbl">total runtime</div></div>
   </div>
-  <p><b>Is this useful for a marketing team?</b> Yes, with review. The trend was real and live, the angle was on-brand, and the DMs referenced each creator's actual content, which is the part teams find most time-consuming to do well. A marketer would <span class="key">edit and approve</span> rather than start from zero, which is exactly the time saving the agent promises.</p>
+  <p><b>Is this useful for a marketing team?</b> Yes, with review. The trend was real and live, the angle was on-brand, and each DM referenced the creator's actual content style — the part teams find most time-consuming to do well. A marketer would <span class="key">edit and approve</span> rather than start from zero, which is exactly the time saving the agent promises.</p>
 </section>
 
 <!-- ════════ 05 REFLECTION ════════ -->
@@ -532,7 +540,7 @@ trend_name, trend_summary, and brand_angle.
     <div class="term-body log">
       <div class="ok"><b>End-to-end chaining.</b> Ten steps from one command: research, scoring, strategy, copy, distribution, persistence. One complete problem, not one isolated task.</div>
       <div class="ok"><b>Real data, real reasoning.</b> Trends and profiles are scraped live, so pitches reference a creator's actual posts, not placeholders.</div>
-      <div class="ok"><b>Right model per job.</b> Opus for strategy, Sonnet for copy, Haiku for analysis. Lower cost, faster runs, quality where it matters.</div>
+      <div class="ok"><b>Right agent per job.</b> Three focused sub-agents on Gemini 2.5 Flash — one for trend analysis, one for influencer scoring, one for email copy. One provider, one API key, quality where it matters.</div>
       <div class="ok"><b>Explainable output.</b> Opportunity scores, fit notes, and angle reasoning ship with every campaign. Marketers can audit, not just accept.</div>
       <div class="ok"><b>Honesty guardrail.</b> The orchestrator flags forced trend-brand connections instead of writing inauthentic copy.</div>
     </div>

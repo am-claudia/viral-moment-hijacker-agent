@@ -70,6 +70,6 @@ The `post_url` is passed to `save_campaign_results` as `social_post_url` and dis
 
 ## Why This Design
 
-- **No sub-agent**: Publishing is a deterministic API call — it doesn't involve reasoning or content generation. A Claude sub-agent would add cost and latency for zero benefit.
+- **No sub-agent**: Publishing is a deterministic API call — it doesn't involve reasoning or content generation. A Gemini sub-agent would add cost and latency for zero benefit.
 - **Simulated, not mocked**: The simulation returns realistic data (post URL, estimated reach) so the rest of the pipeline (save, display) behaves exactly as it would in production.
 - **Easy to make real**: Replace the simulation block with a call to the platform's API. The tool's inputs and outputs don't change — the Orchestrator never needs to know.

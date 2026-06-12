@@ -2,14 +2,15 @@ import json
 import os
 import random
 import datetime
-import anthropic
+from google import genai
+from google.genai import types
 
 try:
-    from ..config import EMAIL_AGENT_MODEL
+    from ..config import EMAIL_AGENT_MODEL, get_api_key
 except ImportError:
     import sys
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
-    from src.config import EMAIL_AGENT_MODEL
+    from src.config import EMAIL_AGENT_MODEL, get_api_key
 
 
 def run_email_agent(
@@ -26,48 +27,47 @@ def run_email_agent(
 
     The orchestrator delegates email writing entirely to this agent.
     It receives only the trend context and brand info, then:
-      Step 1: Uses Claude to write a complete email (subject, body, CTA).
+      Step 1: Uses Gemini to write a complete email (subject, body, CTA).
       Step 2: Simulates sending it and saves a preview to output/emails/.
 
     The orchestrator does NOT write the email itself — it just calls
     send_customer_email with trend context and gets back a sent confirmation.
     """
-    # Step 1: Claude writes the complete email from trend + brand context
-    client = anthropic.Anthropic()
-    response = client.messages.create(
+    # Step 1: Gemini writes the complete email from trend + brand context
+    client = genai.Client(api_key=get_api_key())
+    response = client.models.generate_content(
         model=EMAIL_AGENT_MODEL,
-        max_tokens=1024,
-        system=(
-            f"You are an email marketing specialist for {brand_name}.\n"
-            f"Brand: {brand_description}\n"
-            f"Tone: {tone}\n\n"
-            "Write a trend-inspired customer email that feels like a friendly heads-up, not a blast. "
-            "Connect the viral trend to a specific, actionable product recommendation.\n\n"
-            "Output ONLY valid JSON with these exact keys:\n"
-            "- subject: punchy subject line under 60 characters\n"
-            "- email_body: full email body — conversational, references the trend, one clear product recommendation, ends with CTA\n"
-            "- featured_item: the specific product, recipe, or offer being highlighted\n"
-            "- cta_text: button text like 'Add to my next kit' or 'Shop the look'\n"
-            "- trend_connection: one sentence explaining how the email ties to the viral moment"
+        contents=(
+            f"Write a customer email for {brand_name} based on this viral moment:\n\n"
+            f"Trend: {trend_name}\n"
+            f"Summary: {trend_summary}\n"
+            f"Our brand angle: {brand_angle}\n"
+            f"Platform: {platform}"
         ),
-        messages=[{
-            "role": "user",
-            "content": (
-                f"Write a customer email for {brand_name} based on this viral moment:\n\n"
-                f"Trend: {trend_name}\n"
-                f"Summary: {trend_summary}\n"
-                f"Our brand angle: {brand_angle}\n"
-                f"Platform: {platform}"
+        config=types.GenerateContentConfig(
+            system_instruction=(
+                f"You are an email marketing specialist for {brand_name}.\n"
+                f"Brand: {brand_description}\n"
+                f"Tone: {tone}\n\n"
+                "Write a trend-inspired customer email that feels like a friendly heads-up, not a blast. "
+                "Connect the viral trend to a specific, actionable product recommendation.\n\n"
+                "Output ONLY valid JSON with these exact keys:\n"
+                "- subject: punchy subject line under 60 characters\n"
+                "- email_body: full email body — conversational, references the trend, one clear product recommendation, ends with CTA\n"
+                "- featured_item: the specific product, recipe, or offer being highlighted\n"
+                "- cta_text: button text like 'Add to my next kit' or 'Shop the look'\n"
+                "- trend_connection: one sentence explaining how the email ties to the viral moment"
             ),
-        }],
+            max_output_tokens=1024,
+        ),
     )
 
     try:
-        email_data = json.loads(response.content[0].text)
+        email_data = json.loads(response.text)
     except json.JSONDecodeError:
         return json.dumps({
             "error": "EmailAgent could not parse its own output as JSON",
-            "raw": response.content[0].text[:500],
+            "raw": response.text[:500],
         })
 
     # Step 2: Simulate sending and save a plain-text preview

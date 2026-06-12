@@ -5,7 +5,7 @@
 | Property | Value |
 |---|---|
 | **File** | `src/agent.py` |
-| **Model** | `claude-opus-4-8` with adaptive thinking |
+| **Model** | `gemini-2.5-pro` with built-in reasoning |
 | **Triggered by** | Internal reasoning after `find_influencers` returns scored profiles |
 | **Type** | Orchestrator reasoning step (no tool call) |
 

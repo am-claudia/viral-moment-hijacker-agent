@@ -1,14 +1,27 @@
 import json
 import os
-import anthropic
+from google import genai
+from google.genai import types
 from apify_client import ApifyClient
 
 try:
-    from ..config import INFLUENCER_AGENT_MODEL
+    from ..config import INFLUENCER_AGENT_MODEL, get_api_key
 except ImportError:
     import sys
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
-    from src.config import INFLUENCER_AGENT_MODEL
+    from src.config import INFLUENCER_AGENT_MODEL, get_api_key
+
+
+def _clean_json(text: str) -> str:
+    """Strip markdown code fences that Gemini sometimes wraps around JSON responses."""
+    text = text.strip()
+    if text.startswith("```"):
+        first_newline = text.find("\n")
+        if first_newline != -1:
+            text = text[first_newline + 1:]
+        if text.rstrip().endswith("```"):
+            text = text.rstrip()[:-3].rstrip()
+    return text
 
 
 def _fmt(n: int) -> str:
@@ -64,7 +77,7 @@ def run_influencer_agent(trend: str, platform: str, niche: str, count: int = 3) 
     InfluencerAgent — a specialized sub-agent for creator identification and evaluation.
 
     Step 1: Scrapes real creator profiles from Apify who are posting about the trend.
-    Step 2: Uses Claude to score each creator on brand fit and return the best matches.
+    Step 2: Uses Gemini to score each creator on brand fit and return the best matches.
 
     The orchestrator calls this via the find_influencers tool and receives
     pre-evaluated profiles with fit scores — not raw scraped data.
@@ -77,33 +90,32 @@ def run_influencer_agent(trend: str, platform: str, niche: str, count: int = 3) 
 
     raw_json = json.dumps(raw_creators[: count * 2], ensure_ascii=False)
 
-    # Step 2: Claude evaluates and ranks creators by niche fit and engagement quality
-    client = anthropic.Anthropic()
-    response = client.messages.create(
+    # Step 2: Gemini evaluates and ranks creators by niche fit and engagement quality
+    client = genai.Client(api_key=get_api_key())
+    response = client.models.generate_content(
         model=INFLUENCER_AGENT_MODEL,
-        max_tokens=1024,
-        system=(
-            f"You are an influencer marketing analyst specializing in {niche} on {platform}. "
-            "You evaluate creator profiles and recommend the best ones for brand partnerships.\n\n"
-            "For each creator output:\n"
-            "- name, handle, followers, verified, platform (copy from input)\n"
-            "- fit_score: 1-10 (10 = perfect match for this niche and trend)\n"
-            "- why_good_fit: one sentence on WHY they're a strong partner for this campaign\n"
-            "- content_style: one word (e.g., 'educational', 'humorous', 'aspirational')\n"
-            "- recent_trend_post: first 150 chars of their trend post (copy from input)\n\n"
-            f'Return ONLY valid JSON: {{"trend": "...", "platform": "...", "niche": "...", "influencers": [top {count}]}}'
+        contents=(
+            f"Evaluate these {platform} creators posting about '{trend}' in the {niche} niche:\n\n"
+            f"{raw_json}\n\n"
+            f"Return the top {count} ranked by fit_score."
         ),
-        messages=[{
-            "role": "user",
-            "content": (
-                f"Evaluate these {platform} creators posting about '{trend}' in the {niche} niche:\n\n"
-                f"{raw_json}\n\n"
-                f"Return the top {count} ranked by fit_score."
+        config=types.GenerateContentConfig(
+            system_instruction=(
+                f"You are an influencer marketing analyst specializing in {niche} on {platform}. "
+                "You evaluate creator profiles and recommend the best ones for brand partnerships.\n\n"
+                "For each creator output:\n"
+                "- name, handle, followers, verified, platform (copy from input)\n"
+                "- fit_score: 1-10 (10 = perfect match for this niche and trend)\n"
+                "- why_good_fit: one sentence on WHY they're a strong partner for this campaign\n"
+                "- content_style: one word (e.g., 'educational', 'humorous', 'aspirational')\n"
+                "- recent_trend_post: first 150 chars of their trend post (copy from input)\n\n"
+                f'Return ONLY valid JSON: {{"trend": "...", "platform": "...", "niche": "...", "influencers": [top {count}]}}'
             ),
-        }],
+            max_output_tokens=1024,
+        ),
     )
 
-    return response.content[0].text
+    return _clean_json(response.text)
 
 
 if __name__ == "__main__":

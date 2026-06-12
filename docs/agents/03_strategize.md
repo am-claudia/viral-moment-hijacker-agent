@@ -5,7 +5,7 @@
 | Property | Value |
 |---|---|
 | **File** | `src/agent.py` |
-| **Model** | `claude-opus-4-8` with adaptive thinking |
+| **Model** | `gemini-2.5-pro` with built-in reasoning |
 | **Triggered by** | Internal reasoning after receiving TrendResearchAgent's report |
 | **Type** | Orchestrator reasoning step (no tool call) |
 
@@ -80,5 +80,5 @@ Authenticity over virality — if the angle feels like a stretch, say so.
 ## Why This Design
 
 - **No tool needed**: The Orchestrator already has all the data it needs (trend report in conversation history). Reasoning is faster than a round-trip tool call.
-- **Adaptive thinking**: `claude-opus-4-8` with `thinking: {"type": "adaptive"}` and `output_config: {"effort": "high"}` lets the model decide how much to reason per step. Strategy selection benefits from this.
+- **Built-in reasoning**: `gemini-2.5-pro` activates extended thinking automatically for complex steps. Strategy selection benefits from this — the model works through trade-offs before committing to an angle.
 - **Authenticity gate**: The system prompt explicitly asks the model to flag forced connections. This prevents the agent from blindly hijacking an irrelevant trend just because it scored high.

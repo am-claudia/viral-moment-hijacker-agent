@@ -1,21 +1,21 @@
 import os
 
-# Orchestrator: full reasoning power for strategy, angle selection, and DM writing
-ORCHESTRATOR_MODEL = "claude-opus-4-8"
+# Orchestrator: strategy, angle selection, DM writing
+ORCHESTRATOR_MODEL = "gemini-2.5-flash"
 
-# Sub-agents: fast and cheap for structured data analysis tasks
-TREND_AGENT_MODEL = "claude-haiku-4-5-20251001"
-INFLUENCER_AGENT_MODEL = "claude-haiku-4-5-20251001"
+# Sub-agents: trend analysis and influencer scoring
+TREND_AGENT_MODEL = "gemini-2.5-flash"
+INFLUENCER_AGENT_MODEL = "gemini-2.5-flash"
 
-# Sub-agent: Sonnet for creative email copywriting — better quality than Haiku
-EMAIL_AGENT_MODEL = "claude-sonnet-4-6"
+# Sub-agent: customer email copywriting
+EMAIL_AGENT_MODEL = "gemini-2.5-flash"
 
 
 def get_api_key() -> str:
-    key = os.environ.get("ANTHROPIC_API_KEY")
+    key = os.environ.get("GEMINI_API_KEY")
     if not key:
         raise ValueError(
-            "ANTHROPIC_API_KEY not set.\n"
-            "Copy .env.example to .env and add your key from console.anthropic.com"
+            "GEMINI_API_KEY not set.\n"
+            "Copy .env.example to .env and add your key from aistudio.google.com"
         )
     return key

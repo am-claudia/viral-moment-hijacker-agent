@@ -1,14 +1,15 @@
 import json
 import os
-import anthropic
+from google import genai
+from google.genai import types
 from apify_client import ApifyClient
 
 try:
-    from ..config import TREND_AGENT_MODEL
+    from ..config import TREND_AGENT_MODEL, get_api_key
 except ImportError:
     import sys
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
-    from src.config import TREND_AGENT_MODEL
+    from src.config import TREND_AGENT_MODEL, get_api_key
 
 
 def _fmt(n: int) -> str:
@@ -17,6 +18,18 @@ def _fmt(n: int) -> str:
     if n >= 1_000:
         return f"{n / 1_000:.0f}K"
     return str(n)
+
+
+def _clean_json(text: str) -> str:
+    """Strip markdown code fences that Gemini sometimes wraps around JSON responses."""
+    text = text.strip()
+    if text.startswith("```"):
+        first_newline = text.find("\n")
+        if first_newline != -1:
+            text = text[first_newline + 1:]
+        if text.rstrip().endswith("```"):
+            text = text.rstrip()[:-3].rstrip()
+    return text
 
 
 def _apify_client() -> ApifyClient:
@@ -119,7 +132,7 @@ def run_trend_agent(industry: str, timeframe: str, platform: str) -> str:
     TrendResearchAgent — a specialized sub-agent for viral trend discovery.
 
     Step 1: Scrapes live data from the target platform via Apify.
-    Step 2: Uses Claude to analyze the raw data and rank trends by brand opportunity.
+    Step 2: Uses Gemini to analyze the raw data and rank trends by brand opportunity.
 
     The orchestrator calls this via the search_viral_trends tool and receives
     a pre-analyzed report — not raw hashtag data — so it can focus on strategy.
@@ -133,31 +146,28 @@ def run_trend_agent(industry: str, timeframe: str, platform: str) -> str:
 
     raw_json = json.dumps(raw_trends, ensure_ascii=False)
 
-    # Step 2: Claude analyzes the scraped data and ranks by opportunity score
-    client = anthropic.Anthropic()
-    response = client.messages.create(
+    # Step 2: Gemini analyzes the scraped data and ranks by opportunity score
+    client = genai.Client(api_key=get_api_key())
+    response = client.models.generate_content(
         model=TREND_AGENT_MODEL,
-        max_tokens=1024,
-        system=(
-            f"You are a viral trend analyst for the {industry} industry on {platform}. "
-            "You receive raw scraped social data and identify the top 3 viral moments a brand could hijack.\n\n"
-            "For each trend output:\n"
-            "- trend_name: clean readable name (not just a hashtag)\n"
-            "- hashtag: the raw hashtag from the data\n"
-            "- why_viral: one sentence on WHY this is blowing up right now\n"
-            "- opportunity_score: 1-10 (10 = perfect shareability, high engagement potential)\n"
-            "- content_angle: one sentence on how a brand could join this conversation authentically\n\n"
-            f'Return ONLY valid JSON: {{"industry": "...", "platform": "...", "timeframe": "...", "top_trends": [...]}}'
-        ),
-        messages=[{
-            "role": "user",
-            "content": (
-                f"Analyze these {platform} trends from the {industry} space ({timeframe}):\n\n{raw_json}"
+        contents=f"Analyze these {platform} trends from the {industry} space ({timeframe}):\n\n{raw_json}",
+        config=types.GenerateContentConfig(
+            system_instruction=(
+                f"You are a viral trend analyst for the {industry} industry on {platform}. "
+                "You receive raw scraped social data and identify the top 3 viral moments a brand could hijack.\n\n"
+                "For each trend output:\n"
+                "- trend_name: clean readable name (not just a hashtag)\n"
+                "- hashtag: the raw hashtag from the data\n"
+                "- why_viral: one sentence on WHY this is blowing up right now\n"
+                "- opportunity_score: 1-10 (10 = perfect shareability, high engagement potential)\n"
+                "- content_angle: one sentence on how a brand could join this conversation authentically\n\n"
+                f'Return ONLY valid JSON: {{"industry": "...", "platform": "...", "timeframe": "...", "top_trends": [...]}}'
             ),
-        }],
+            max_output_tokens=1024,
+        ),
     )
 
-    return response.content[0].text
+    return _clean_json(response.text)
 
 
 if __name__ == "__main__":

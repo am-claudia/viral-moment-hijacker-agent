@@ -5,7 +5,7 @@
 | Property | Value |
 |---|---|
 | **File** | `src/agents/email_agent.py` |
-| **Model** | `claude-sonnet-4-6` |
+| **Model** | `gemini-2.5-pro` |
 | **Triggered by** | `send_customer_email` tool call from the Orchestrator |
 | **Type** | Single-turn sub-agent |
 
@@ -17,7 +17,7 @@ The EmailAgent writes a complete, trend-inspired customer email and simulates se
 
 It runs in **two steps**:
 
-1. **Write** — Claude Sonnet generates a full email: subject line, body, featured product, and CTA
+1. **Write** — Gemini Pro generates a full email: subject line, body, featured product, and CTA
 2. **Simulate** — generates subscriber stats and saves a plain-text preview to `output/emails/`
 
 ---
@@ -70,10 +70,10 @@ The `subject` and `subscribers_reached` fields are passed to `save_campaign_resu
 send_customer_email(trend_name, trend_summary, brand_angle)
         │  (+ brand_name, brand_description, tone injected by dispatcher)
         ▼
-anthropic.messages.create(            ← Claude Sonnet
+client.models.generate_content(       ← Gemini Pro
     model = EMAIL_AGENT_MODEL,
-    system = "You are an email marketing specialist for {brand_name}...",
-    messages = [{ "role": "user", "content": trend context }]
+    contents = trend_context,
+    config = GenerateContentConfig(system_instruction="You are an email marketing specialist for {brand_name}...")
 )
         │
         ▼
@@ -91,11 +91,11 @@ Returns: JSON string → Orchestrator
 
 ---
 
-## Why Sonnet (Not Haiku)?
+## Why Pro (Not Flash)?
 
-Email copywriting is customer-facing creative writing. The quality of the subject line and email body directly affects open rates and conversions. Sonnet produces more natural, compelling copy than Haiku — the cost difference is worth it for this task.
+Email copywriting is customer-facing creative writing. The quality of the subject line and email body directly affects open rates and conversions. Gemini Pro produces more natural, compelling copy than Flash — the cost difference is worth it for this task.
 
-Compare to the Trend and Influencer agents, which do structured JSON classification from scraped data — Haiku is sufficient there.
+Compare to the Trend and Influencer agents, which do structured JSON classification from scraped data — Flash is sufficient there.
 
 ---
 

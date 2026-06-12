@@ -5,7 +5,7 @@
 AI marketing agent that monitors viral moments in a target industry, identifies relevant influencers, crafts personalized DM pitches, and generates a reactive brand post — all in one automated pipeline.
 
 **University Assignment:** Agentic AI Systems with Tool Use  
-**Tech Stack:** Python 3.11+, Anthropic Claude API (claude-opus-4-8), Rich CLI
+**Tech Stack:** Python 3.11+, Google Gemini API (gemini-2.5-pro), Rich CLI
 
 ---
 
@@ -16,18 +16,18 @@ main.py (CLI)
     │
     └── ViralMomentHijacker (src/agent.py)
             │
-            ├── Orchestrator: claude-opus-4-8 with adaptive thinking
+            ├── Orchestrator: gemini-2.5-pro with built-in reasoning
             │   Handles: strategy, brand angle, DM pitches, brand post
             │
             └── Tools (src/tools.py)  ← each tool dispatches to a sub-agent or runs directly
                     │
-                    ├── search_viral_trends()   → TrendResearchAgent  (claude-haiku-4-5)
+                    ├── search_viral_trends()   → TrendResearchAgent  (gemini-2.5-flash)
                     │                              Scrapes Apify + analyzes opportunities
                     │
-                    ├── find_influencers()       → InfluencerAgent     (claude-haiku-4-5)
+                    ├── find_influencers()       → InfluencerAgent     (gemini-2.5-flash)
                     │                              Scrapes Apify + scores creator fit
                     │
-                    ├── send_customer_email()   → EmailAgent           (claude-sonnet-4-6)
+                    ├── send_customer_email()   → EmailAgent           (gemini-2.5-pro)
                     │                              Writes full email + simulates sending
                     │
                     ├── post_to_social_media()  → simulated (no sub-agent needed)
@@ -84,7 +84,7 @@ main.py (CLI)
 ## Sub-Agent Definitions
 
 ### TrendResearchAgent (`src/agents/trend_agent.py`)
-**Model:** `claude-haiku-4-5-20251001`  
+**Model:** `gemini-2.5-flash`  
 **Triggered by:** `search_viral_trends` tool call  
 **What it does:**
 1. Scrapes live trending content from TikTok / Instagram / LinkedIn via Apify
@@ -96,7 +96,7 @@ main.py (CLI)
 ---
 
 ### InfluencerAgent (`src/agents/influencer_agent.py`)
-**Model:** `claude-haiku-4-5-20251001`  
+**Model:** `gemini-2.5-flash`  
 **Triggered by:** `find_influencers` tool call  
 **What it does:**
 1. Scrapes real creator profiles from TikTok via Apify
@@ -108,7 +108,7 @@ main.py (CLI)
 ---
 
 ### EmailAgent (`src/agents/email_agent.py`)
-**Model:** `claude-sonnet-4-6`  
+**Model:** `gemini-2.5-pro`  
 **Triggered by:** `send_customer_email` tool call  
 **What it does:**
 1. Receives trend context + brand info (injected from the ViralMomentHijacker instance)
@@ -122,16 +122,15 @@ main.py (CLI)
 
 ## Key Design Decisions
 
-**Why claude-opus-4-8 with adaptive thinking for the orchestrator?**  
-Campaign strategy requires multi-step reasoning: picking the right brand angle, personalizing DMs for each influencer, and writing platform-native content. Adaptive thinking lets Claude decide how deeply to reason per step.
+**Why gemini-2.5-pro for the orchestrator?**  
+Campaign strategy requires multi-step reasoning: picking the right brand angle, personalizing DMs for each influencer, and writing platform-native content. Gemini 2.5 Pro includes built-in extended thinking that activates automatically for complex steps.
 
 **Why a manual agentic loop?**  
 The manual loop in `agent.py` gives full visibility into each tool call (name, args, result), injects brand context that can't come from the orchestrator's prompt alone, and drives the Rich progress display. An auto-runner would hide these steps.
 
 **Why different models per sub-agent?**  
-- Haiku (Trend + Influencer agents): fast and cheap for structured JSON analysis of scraped data.  
-- Sonnet (Email agent): better creative writing for customer-facing copy.  
-- Opus (Orchestrator): best reasoning for multi-step strategy and personalization.
+- Flash (Trend + Influencer agents): fast and cheap for structured JSON analysis of scraped data.  
+- Pro (Email agent + Orchestrator): best reasoning for multi-step strategy, personalization, and customer-facing creative writing.
 
 **Why do sub-agents use single-turn calls (no loop)?**  
 Each sub-agent has one focused job with all context available upfront — no back-and-forth needed. A loop would add latency and complexity for no benefit. Loops are for tasks that require tool use themselves.
@@ -173,7 +172,7 @@ viral-moment-hijacker-agent/
 
 | Variable | Required | Description |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | Yes | Anthropic API key from console.anthropic.com |
+| `GEMINI_API_KEY` | Yes | Google Gemini API key from aistudio.google.com |
 | `APIFY_API_TOKEN` | Yes | Apify token for live social media scraping |
 
 ---
@@ -237,7 +236,7 @@ Campaigns are saved to `output/campaigns/campaign_<brand>_<timestamp>.json`:
 
 **Add a new sub-agent:** Create `src/agents/your_agent.py` with a `run_your_agent()` function. Export it from `src/agents/__init__.py`. Call it from the relevant tool function in `src/tools.py`.
 
-**Swap a sub-agent's model:** Change `TREND_AGENT_MODEL`, `INFLUENCER_AGENT_MODEL`, or `EMAIL_AGENT_MODEL` in `src/config.py`.
+**Swap a sub-agent's model:** Change `TREND_AGENT_MODEL`, `INFLUENCER_AGENT_MODEL`, or `EMAIL_AGENT_MODEL` in [src/config.py](src/config.py).
 
 **Add Instagram/LinkedIn influencer scraping:** `InfluencerAgent` currently only scrapes TikTok. Add `_scrape_instagram_creators()` and `_scrape_linkedin_creators()` to `src/agents/influencer_agent.py` following the same pattern as `_scrape_tiktok_creators()`.
 

@@ -101,5 +101,5 @@ The `saved_to` path is captured by the agentic loop in `agent.py` and used by `d
 ## Why This Design
 
 - **Single call at the end**: Rather than writing partial results at each step, the Orchestrator accumulates everything and saves once. This keeps the output atomic — either the full campaign is saved, or nothing is.
-- **No sub-agent**: Saving files is deterministic. There is nothing for Claude to reason about here.
+- **No sub-agent**: Saving files is deterministic. There is nothing for Gemini to reason about here.
 - **Three output files**: The campaign JSON is the source of truth. The `.txt` files are convenience exports for the humans who will actually use the hashtags and calendar.

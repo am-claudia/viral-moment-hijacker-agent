@@ -5,7 +5,7 @@
 | Property | Value |
 |---|---|
 | **File** | `src/agent.py` |
-| **Model** | `claude-opus-4-8` with adaptive thinking |
+| **Model** | `gemini-2.5-pro` with built-in reasoning |
 | **Triggered by** | Internal reasoning after Tasks 3–5 are complete |
 | **Type** | Orchestrator reasoning step (no tool call) |
 

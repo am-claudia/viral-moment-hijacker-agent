@@ -5,7 +5,7 @@
 | Property | Value |
 |---|---|
 | **File** | `src/tools.py` → `generate_hashtag_strategy()` |
-| **Model** | `claude-opus-4-8` (writes the hashtags) |
+| **Model** | `gemini-2.5-pro` (writes the hashtags) |
 | **Triggered by** | `generate_hashtag_strategy` tool call from the Orchestrator |
 | **Type** | Pass-through formatter (no sub-agent) |
 
@@ -15,7 +15,7 @@
 
 The Orchestrator writes all hashtag groups itself — this is a creative task that benefits from its full context about the brand, platform, and chosen trend. The tool simply **validates the structure and returns it** in a consistent format ready for the final campaign save.
 
-No additional Claude call is made here. The tool is a formatter, not a reasoner.
+No additional Gemini call is made here. The tool is a formatter, not a reasoner.
 
 ---
 
@@ -70,5 +70,5 @@ A separate `output/hashtags/hashtags_<brand>_<timestamp>.txt` file is also writt
 ## Why This Design
 
 - **Orchestrator writes, tool formats**: Hashtag selection requires knowing the brand, the trend, and the platform convention. The Orchestrator has all of this — no need for a sub-agent.
-- **No sub-agent**: A dedicated hashtag sub-agent would add a Claude API call for a task the Orchestrator already does well. Pass-through tools are lighter and faster.
+- **No sub-agent**: A dedicated hashtag sub-agent would add a Gemini API call for a task the Orchestrator already does well. Pass-through tools are lighter and faster.
 - **Saved separately**: The hashtag file in `output/hashtags/` makes it easy to copy-paste without opening the full campaign JSON.

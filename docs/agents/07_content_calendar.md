@@ -5,7 +5,7 @@
 | Property | Value |
 |---|---|
 | **File** | `src/tools.py` → `generate_content_calendar()` |
-| **Model** | `claude-opus-4-8` (writes the calendar) |
+| **Model** | `gemini-2.5-pro` (writes the calendar) |
 | **Triggered by** | `generate_content_calendar` tool call from the Orchestrator |
 | **Type** | Pass-through formatter (no sub-agent) |
 

@@ -5,7 +5,7 @@ import datetime
 from .agents import run_trend_agent, run_influencer_agent, run_email_agent
 
 # ---------------------------------------------------------------------------
-# Tool schemas — what the orchestrator (Claude Opus) sees and can call
+# Tool schemas — what the orchestrator (Gemini) sees and can call
 # ---------------------------------------------------------------------------
 
 TOOL_SCHEMAS = [
@@ -217,7 +217,7 @@ TOOL_SCHEMAS = [
                 "content_calendar": {"type": "array", "items": {"type": "object"}},
                 "hashtag_strategy": {"type": "object"},
             },
-            "required": ["viral_trend", "trend_summary", "brand_angle", "influencer_pitches", "brand_post", "platform"],
+            "required": ["viral_trend", "trend_summary", "brand_angle", "platform"],
         },
     },
 ]
@@ -456,8 +456,8 @@ def execute_tool(
             viral_trend=tool_input["viral_trend"],
             trend_summary=tool_input["trend_summary"],
             brand_angle=tool_input["brand_angle"],
-            influencer_pitches=tool_input["influencer_pitches"],
-            brand_post=tool_input["brand_post"],
+            influencer_pitches=tool_input.get("influencer_pitches", []),
+            brand_post=tool_input.get("brand_post", ""),
             platform=tool_input["platform"],
             brand_name=brand_name,
             social_post_url=tool_input.get("social_post_url"),

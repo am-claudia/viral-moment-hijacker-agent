@@ -5,7 +5,7 @@
 | Property | Value |
 |---|---|
 | **File** | `src/agents/influencer_agent.py` |
-| **Model** | `claude-haiku-4-5-20251001` |
+| **Model** | `gemini-2.5-flash` |
 | **Triggered by** | `find_influencers` tool call from the Orchestrator |
 | **Type** | Single-turn sub-agent |
 
@@ -18,7 +18,7 @@ The InfluencerAgent identifies and evaluates real creators who are actively post
 It runs in **two steps**:
 
 1. **Scrape** — pulls real creator profiles from TikTok via Apify who are posting about the trend hashtag
-2. **Score** — sends raw profiles to Claude Haiku, which evaluates each creator and returns the top matches ranked by `fit_score`
+2. **Score** — sends raw profiles to Gemini Flash, which evaluates each creator and returns the top matches ranked by `fit_score`
 
 ---
 
@@ -78,10 +78,10 @@ _scrape_tiktok_creators(trend, count * 3)   ← Apify API call
 raw_creators (list of dicts with handle, bio, video stats)
         │
         ▼
-anthropic.messages.create(                   ← Claude Haiku
+client.models.generate_content(              ← Gemini Flash
     model = INFLUENCER_AGENT_MODEL,
-    system = "You are an influencer marketing analyst...",
-    messages = [{ "role": "user", "content": raw_json }]
+    contents = raw_json,
+    config = GenerateContentConfig(system_instruction="You are an influencer marketing analyst...")
 )
         │
         ▼
@@ -102,7 +102,7 @@ From `clockworks/tiktok-scraper` (30 results per hashtag):
 | `video_views` | `playCount` |
 | `video_likes` | `diggCount` |
 
-Duplicates are removed (by handle). Creators are sorted by follower count before being sent to Claude.
+Duplicates are removed (by handle). Creators are sorted by follower count before being sent to Gemini.
 
 ---
 
@@ -110,5 +110,5 @@ Duplicates are removed (by handle). Creators are sorted by follower count before
 
 - **Real profiles, not fabricated**: Apify scrapes actual TikTok data — the Orchestrator writes DMs based on real bios and recent posts.
 - **Scored profiles, not raw lists**: The `fit_score` and `content_style` fields make personalization easy. The Orchestrator uses them directly in Task 5.
-- **Haiku model**: Scoring and ranking structured profile data is a classification task — Haiku handles it well at low cost.
-- **Only TikTok for now**: Instagram and LinkedIn scrapers are not yet implemented. See `CLAUDE.md` → Extending the Agent for how to add them.
+- **Flash model**: Scoring and ranking structured profile data is a classification task — Gemini Flash handles it well at low cost.
+- **Only TikTok for now**: Instagram and LinkedIn scrapers are not yet implemented. See `CLAUDE.md` → Extending the Agent for how to add them. (Note: CLAUDE.md is the project spec file, separate from the AI provider.)

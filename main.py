@@ -46,19 +46,20 @@ def display_results(saved_path: str, platform: str):
     )
 
     pitches = campaign.get("influencer_pitches", [])
-    console.print(f"\n[green]✓[/green] {len(pitches)} influencer DM pitch(es) generated")
-    for p in pitches:
-        handle = p.get("handle") or p.get("name", "Unknown")
-        followers = p.get("followers", "—")
-        dm = p.get("dm_pitch", "").strip()
-        console.print()
-        console.print(
-            Panel(
-                f"[dim]{handle}  ·  {followers} followers[/dim]\n\n{dm}",
-                title=f"[bold yellow]DM Pitch — {p.get('name', handle)}[/bold yellow]",
-                border_style="yellow",
+    if pitches:
+        console.print(f"\n[green]✓[/green] {len(pitches)} influencer DM pitch(es) generated")
+        for p in pitches:
+            handle = p.get("handle") or p.get("name", "Unknown")
+            followers = p.get("followers", "—")
+            dm = p.get("dm_pitch", "").strip()
+            console.print()
+            console.print(
+                Panel(
+                    f"[dim]{handle}  ·  {followers} followers[/dim]\n\n{dm}",
+                    title=f"[bold yellow]DM Pitch — {p.get('name', handle)}[/bold yellow]",
+                    border_style="yellow",
+                )
             )
-        )
 
     brand_post = campaign.get("brand_post", "")
     if brand_post:
@@ -72,7 +73,7 @@ def display_results(saved_path: str, platform: str):
         )
 
     hashtags = campaign.get("hashtag_strategy", {})
-    # Claude may save groups flat or nested under "groups"
+    # Gemini may save groups flat or nested under "groups"
     groups = hashtags.get("groups") or hashtags
     if groups.get("broad") or groups.get("niche"):
         console.print()
@@ -183,6 +184,14 @@ Examples:
         dest="brand_values",
         help="Comma-separated brand values. Default: authentic, creative, community-driven"
     )
+    parser.add_argument(
+        "--find-influencers", action="store_true", dest="find_influencers",
+        help="Enable InfluencerAgent: find and score creators, then write personalized DM pitches"
+    )
+    parser.add_argument(
+        "--send-email", action="store_true", dest="send_email",
+        help="Enable EmailAgent: write and send a trend-inspired customer email"
+    )
     return parser
 
 
@@ -193,10 +202,17 @@ def main():
     print_banner()
 
     console.print("\n[bold]Campaign Configuration[/bold]")
+    agents_active = ["TrendResearchAgent"]
+    if args.find_influencers:
+        agents_active.append("InfluencerAgent")
+    if args.send_email:
+        agents_active.append("EmailAgent")
+
     console.print(f"  Brand:    [cyan]{args.brand_name}[/cyan]")
     console.print(f"  Industry: [cyan]{args.industry}[/cyan]")
     console.print(f"  Platform: [cyan]{args.platform}[/cyan]")
     console.print(f"  Tone:     [cyan]{args.tone}[/cyan]")
+    console.print(f"  Agents:   [cyan]{', '.join(agents_active)}[/cyan]")
     console.print()
     console.print(Rule("[bold green]Starting Pipeline[/bold green]"))
     console.print()
@@ -208,6 +224,8 @@ def main():
             tone=args.tone,
             brand_values=args.brand_values,
             console=console,
+            use_influencers=args.find_influencers,
+            use_email=args.send_email,
         )
         saved_path = agent.run_campaign(industry=args.industry, platform=args.platform)
     except ValueError as e:

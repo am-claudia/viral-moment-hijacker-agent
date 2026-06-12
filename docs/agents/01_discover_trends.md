@@ -5,7 +5,7 @@
 | Property | Value |
 |---|---|
 | **File** | `src/agents/trend_agent.py` |
-| **Model** | `claude-haiku-4-5-20251001` |
+| **Model** | `gemini-2.5-flash` |
 | **Triggered by** | `search_viral_trends` tool call from the Orchestrator |
 | **Type** | Single-turn sub-agent |
 
@@ -18,7 +18,7 @@ The TrendResearchAgent is the first step of the pipeline. It finds what's curren
 It runs in **two steps**:
 
 1. **Scrape** — pulls live trending content from TikTok, Instagram, or LinkedIn via Apify
-2. **Analyze** — sends the raw data to Claude Haiku, which ranks the top 3 trends by opportunity score and content angle
+2. **Analyze** — sends the raw data to Gemini Flash, which ranks the top 3 trends by opportunity score and content angle
 
 The Orchestrator never sees raw scraped data — it receives a clean, pre-analyzed report and can immediately pick the best trend to hijack.
 
@@ -35,7 +35,7 @@ Called by the Orchestrator via the `search_viral_trends` tool:
 }
 ```
 
-The `platform` parameter is injected by the tool dispatcher (from the Orchestrator's context), not passed by Claude directly.
+The `platform` parameter is injected by the tool dispatcher (from the Orchestrator's context), not passed by Gemini directly.
 
 ---
 
@@ -74,10 +74,10 @@ _SCRAPERS[platform](industry, count=10)   ← Apify API call
 raw_trends (list of dicts with hashtags, views, captions)
         │
         ▼
-anthropic.messages.create(                ← Claude Haiku
+client.models.generate_content(           ← Gemini Flash
     model = TREND_AGENT_MODEL,
-    system = "You are a viral trend analyst...",
-    messages = [{ "role": "user", "content": raw_json }]
+    contents = raw_json,
+    config = GenerateContentConfig(system_instruction="You are a viral trend analyst...")
 )
         │
         ▼
@@ -97,5 +97,5 @@ Returns: JSON string → Orchestrator
 ## Why This Design
 
 - **Sub-agent, not raw tool**: The Orchestrator gets a ranked report, not raw hashtag lists. This keeps the Orchestrator focused on strategy, not data wrangling.
-- **Haiku model**: Structured JSON analysis of scraped data doesn't need Opus-level reasoning. Haiku is fast and cheap.
+- **Flash model**: Structured JSON analysis of scraped data doesn't need Pro-level reasoning. Gemini Flash is fast and cheap.
 - **Single-turn**: All context is available upfront (raw trends + industry). No back-and-forth needed.

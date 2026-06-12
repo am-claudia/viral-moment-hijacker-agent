@@ -1,6 +1,5 @@
 ---
 layout: default
-title: Viral Moment Hijacker
 ---
 
 > An AI multi-agent system that monitors what's going viral in any industry, identifies the right creators, writes personalized outreach, publishes a reactive brand post, and emails your customers — all from a single command.

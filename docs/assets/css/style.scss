@@ -1,0 +1,224 @@
+---
+---
+
+@import "{{ site.theme }}";
+
+/* ── Typography ─────────────────────────────────────── */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+  color: #24292e;
+}
+
+/* ── Header / Hero ──────────────────────────────────── */
+.page-header {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  padding: 4rem 2rem;
+}
+
+.page-header .project-name {
+  font-size: 2.8rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.page-header .project-tagline {
+  font-size: 1.1rem;
+  opacity: 0.85;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.btn {
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.6rem 1.4rem;
+  border: 2px solid rgba(255,255,255,0.6);
+  transition: all 0.2s;
+}
+
+.btn:hover {
+  background: rgba(255,255,255,0.15);
+  border-color: white;
+}
+
+/* ── Main content ───────────────────────────────────── */
+.main-content {
+  max-width: 860px;
+  padding: 2.5rem 2rem;
+}
+
+.main-content h1 { display: none; } /* title is already in the hero */
+
+.main-content h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f3460;
+  border-bottom: 2px solid #e8eaed;
+  padding-bottom: 0.4rem;
+  margin-top: 2.5rem;
+}
+
+.main-content h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #24292e;
+  margin-top: 1.5rem;
+}
+
+/* ── Badges row ─────────────────────────────────────── */
+.badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 1rem 0 2rem;
+}
+
+/* ── Pipeline cards ─────────────────────────────────── */
+.pipeline {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.step {
+  background: #f6f8fa;
+  border: 1px solid #e1e4e8;
+  border-radius: 8px;
+  padding: 1rem 1.2rem;
+  border-left: 4px solid #0f3460;
+}
+
+.step .step-number {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #0f3460;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.step .step-title {
+  font-weight: 600;
+  margin: 0.2rem 0 0.3rem;
+  color: #24292e;
+}
+
+.step .step-agent {
+  font-size: 0.8rem;
+  color: #6a737d;
+  font-style: italic;
+}
+
+/* ── Agent model pills ──────────────────────────────── */
+.agents {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem;
+  margin: 1.5rem 0;
+}
+
+.agent-card {
+  background: #fff;
+  border: 1px solid #e1e4e8;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.agent-card .agent-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #0f3460;
+}
+
+.agent-card .agent-model {
+  font-size: 0.8rem;
+  background: #0f3460;
+  color: white;
+  border-radius: 20px;
+  padding: 0.15rem 0.6rem;
+  display: inline-block;
+  margin: 0.3rem 0;
+}
+
+.agent-card .agent-role {
+  font-size: 0.8rem;
+  color: #6a737d;
+  margin-top: 0.3rem;
+}
+
+/* ── Code blocks ────────────────────────────────────── */
+.main-content pre {
+  background: #1a1a2e;
+  color: #e6edf3;
+  border-radius: 8px;
+  padding: 1.2rem 1.5rem;
+  border: none;
+  font-size: 0.875rem;
+  overflow-x: auto;
+}
+
+.main-content code {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.875em;
+  background: #f0f2f5;
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  color: #0f3460;
+}
+
+.main-content pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+  font-size: inherit;
+}
+
+/* ── Tables ─────────────────────────────────────────── */
+.main-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.2rem 0;
+  font-size: 0.9rem;
+}
+
+.main-content table th {
+  background: #0f3460;
+  color: white;
+  padding: 0.7rem 1rem;
+  text-align: left;
+  font-weight: 600;
+}
+
+.main-content table td {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid #e1e4e8;
+}
+
+.main-content table tr:hover td {
+  background: #f6f8fa;
+}
+
+/* ── Blockquote / callout ───────────────────────────── */
+.main-content blockquote {
+  border-left: 4px solid #0f3460;
+  background: #f0f4ff;
+  margin: 1.2rem 0;
+  padding: 0.8rem 1.2rem;
+  border-radius: 0 6px 6px 0;
+  color: #24292e;
+  font-style: normal;
+}
+
+/* ── Footer ─────────────────────────────────────────── */
+.site-footer {
+  border-top: 1px solid #e1e4e8;
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  font-size: 0.85rem;
+  color: #6a737d;
+}

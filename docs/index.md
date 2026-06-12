@@ -3,57 +3,66 @@ layout: default
 title: Viral Moment Hijacker
 ---
 
-# Viral Moment Hijacker
-
-> An AI agent that monitors what's going viral in any industry, finds the right creators, writes personalized outreach, publishes a reactive brand post, and emails your customers — all from a single command.
+> An AI multi-agent system that monitors what's going viral in any industry, identifies the right creators, writes personalized outreach, publishes a reactive brand post, and emails your customers — all from a single command.
 
 ---
 
-## The problem it solves
+## The problem
 
-When a trend blows up, brands that win respond within **hours, not days**. The manual workflow is too slow — by the time you've monitored platforms, found creators, researched each one, written outreach, drafted a post, and notified customers, the moment has passed.
+When a trend blows up, brands that win respond within **hours, not days**. The manual workflow kills you: monitor platforms → find creators → research each one → write personalized outreach → draft a post → notify customers. By the time that's done, the moment has passed.
 
-This agent runs the entire workflow in one automated pipeline.
+This agent runs the entire workflow automatically.
 
 ---
 
-## Multi-agent architecture
+## How it works
+
+The system is built as an **orchestrator + 3 specialized sub-agents**. Each agent has one job and the right model for it.
+
+| Agent | Model | Job |
+|---|---|---|
+| **Orchestrator** | Gemini 2.5 Flash | Strategy, brand angle, DM pitches, brand post, calendar |
+| **TrendResearchAgent** | Gemini 2.5 Flash | Scrape Apify live data → rank trends by opportunity score |
+| **InfluencerAgent** | Gemini 2.5 Flash | Scrape creator profiles → score each on niche fit |
+| **EmailAgent** | Gemini 2.5 Flash | Write full customer email from trend context → simulate send |
 
 ```
-Claude Opus 4.8 (Orchestrator)
+Orchestrator (Gemini 2.5 Flash)
     │
-    ├── search_viral_trends  →  TrendResearchAgent  (Haiku)
-    │                           Scrapes Apify live data, ranks trends by opportunity score
+    ├── search_viral_trends  →  TrendResearchAgent
+    │                           Scrapes Apify, returns ranked trends with content angles
     │
-    ├── find_influencers     →  InfluencerAgent     (Haiku)
-    │                           Scrapes creator profiles, scores each on niche fit
+    ├── find_influencers     →  InfluencerAgent
+    │                           Scrapes creator profiles, returns fit scores + why_good_fit
     │
-    └── send_customer_email  →  EmailAgent          (Sonnet)
-                                Writes the full email from trend context, simulates send
+    └── send_customer_email  →  EmailAgent
+                                Writes subject, body, CTA — orchestrator never touches email copy
 ```
 
-The orchestrator never writes the email itself — it delegates with just trend context and gets back a confirmation. Same for trends and influencers: it receives analyzed reports, not raw scraped data, so it can focus entirely on strategy.
+The orchestrator receives **pre-analyzed reports**, not raw scraped data — so it can focus entirely on strategy.
 
 ---
 
 ## 10-step pipeline
 
-| # | Task | Who does it |
+| Step | Task | Agent |
 |---|---|---|
-| 1 | Scrape live trending content | TrendResearchAgent (Haiku) |
-| 2 | Score real creator profiles | InfluencerAgent (Haiku) |
-| 3 | Pick the authentic brand angle | Orchestrator (Opus) |
-| 4 | Generate hashtag strategy | Orchestrator (Opus) |
-| 5 | Write personalized DM pitches | Orchestrator (Opus) |
-| 6 | Write the reactive brand post | Orchestrator (Opus) |
-| 7 | Build a 7-day content calendar | Orchestrator (Opus) |
-| 8 | Publish to social media | Simulated tool |
-| 9 | Write and send customer email | EmailAgent (Sonnet) |
-| 10 | Save the full campaign package | Python function |
+| 1 — DISCOVER | Scrape live trending content from TikTok / Instagram / LinkedIn | TrendResearchAgent |
+| 2 — IDENTIFY | Score real creator profiles for niche fit | InfluencerAgent |
+| 3 — STRATEGIZE | Pick the most authentic brand angle | Orchestrator |
+| 4 — HASHTAGS | Generate grouped hashtag strategy (broad / niche / branded / trend) | Orchestrator |
+| 5 — PERSONALIZE | Write a custom DM pitch per creator using their actual content style | Orchestrator |
+| 6 — CREATE | Write a reactive brand post in the brand's voice | Orchestrator |
+| 7 — CALENDAR | Build a 7-day content plan (Day 1 jumps on trend, Days 6–7 convert) | Orchestrator |
+| 8 — POST | Publish the brand post to social media | Simulated tool |
+| 9 — EMAIL | Write and send a trend-inspired customer email | EmailAgent |
+| 10 — SAVE | Write the full campaign package to `output/` as timestamped JSON | Python function |
 
 ---
 
-## Agent docs
+## Agent documentation
+
+Each step has its own detailed doc covering inputs, outputs, how it works, and design decisions.
 
 - [Orchestrator](agents/00_orchestrator.md) — agentic loop, system prompt, tool delegation
 - [Task 1 — Discover Trends](agents/01_discover_trends.md)
@@ -72,9 +81,13 @@ The orchestrator never writes the email itself — it delegates with just trend 
 ## Quick start
 
 ```bash
+# Install dependencies
 pip install -r requirements.txt
-cp .env.example .env   # add ANTHROPIC_API_KEY + APIFY_API_TOKEN
 
+# Add your API keys to .env
+cp .env.example .env
+
+# Run a campaign
 python main.py \
   --industry food \
   --brand-name "Forkly" \
@@ -83,4 +96,28 @@ python main.py \
   --tone "casual, witty"
 ```
 
-View the full setup guide on [GitHub](https://github.com/am-claudia/viral-moment-hijacker-agent#readme).
+**Required API keys:**
+- `GEMINI_API_KEY` — from [aistudio.google.com](https://aistudio.google.com) (free)
+- `APIFY_API_TOKEN` — from [apify.com](https://apify.com) (free tier available)
+
+---
+
+## Output
+
+Every campaign run saves 4 files to `output/`:
+
+| File | Contents |
+|---|---|
+| `campaigns/<brand>_<timestamp>.json` | Full campaign package — trend, pitches, post, email, calendar, hashtags |
+| `calendars/<brand>_<timestamp>.txt` | 7-day content calendar as plain text |
+| `hashtags/<brand>_<timestamp>.txt` | Grouped hashtag sets + caption formula |
+| `emails/email_<timestamp>.txt` | Customer email preview |
+
+---
+
+## Tech stack
+
+- **AI** — Google Gemini 2.5 Flash (all agents)
+- **Scraping** — Apify (TikTok, Instagram, LinkedIn)
+- **CLI** — Python 3.11+ with Rich for terminal UI
+- **Pattern** — Manual agentic loop with tool use

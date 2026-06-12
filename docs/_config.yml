@@ -1,0 +1,10 @@
+title: Viral Moment Hijacker
+description: AI-powered trend + influencer marketing agent
+theme: minima
+
+plugins:
+  - jekyll-relative-links
+
+relative_links:
+  enabled: true
+  collections: true

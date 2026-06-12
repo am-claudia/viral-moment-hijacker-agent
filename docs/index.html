@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Viral Moment Hijacker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:   #0d1117;
+      --dark:   #161b22;
+      --card:   #21262d;
+      --border: #30363d;
+      --accent: #58a6ff;
+      --green:  #3fb950;
+      --purple: #bc8cff;
+      --orange: #ffa657;
+      --text:   #e6edf3;
+      --muted:  #8b949e;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--navy);
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    /* ── NAV ───────────────────────────────────────────── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13,17,23,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+    }
+
+    nav .logo {
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--accent);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    nav .logo::before {
+      content: "⚡";
+      font-size: 1.1rem;
+    }
+
+    nav .links {
+      display: flex;
+      gap: 1.5rem;
+      list-style: none;
+    }
+
+    nav .links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    nav .links a:hover { color: var(--text); }
+
+    /* ── HERO ──────────────────────────────────────────── */
+    .hero {
+      padding: 6rem 2rem 5rem;
+      text-align: center;
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    .hero .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(88,166,255,0.1);
+      border: 1px solid rgba(88,166,255,0.3);
+      color: var(--accent);
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.3rem 0.9rem;
+      border-radius: 20px;
+      margin-bottom: 1.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -1px;
+      margin-bottom: 1.2rem;
+      background: linear-gradient(135deg, #e6edf3 0%, #58a6ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero p {
+      font-size: 1.15rem;
+      color: var(--muted);
+      max-width: 600px;
+      margin: 0 auto 2.5rem;
+      line-height: 1.8;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #0d1117;
+      padding: 0.75rem 1.8rem;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+
+    .btn-primary:hover { opacity: 0.85; }
+
+    .btn-secondary {
+      background: var(--card);
+      color: var(--text);
+      padding: 0.75rem 1.8rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-decoration: none;
+      border: 1px solid var(--border);
+      transition: border-color 0.2s;
+    }
+
+    .btn-secondary:hover { border-color: var(--accent); }
+
+    /* ── SECTION ───────────────────────────────────────── */
+    section {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 4rem 2rem;
+      border-top: 1px solid var(--border);
+    }
+
+    section h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+
+    section .section-sub {
+      color: var(--muted);
+      margin-bottom: 2rem;
+      font-size: 0.95rem;
+    }
+
+    /* ── AGENT CARDS ───────────────────────────────────── */
+    .agent-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+
+    .agent-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.4rem;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .agent-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .agent-card .icon {
+      font-size: 1.6rem;
+      margin-bottom: 0.8rem;
+    }
+
+    .agent-card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.3rem;
+    }
+
+    .agent-card .model-pill {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(88,166,255,0.12);
+      color: var(--accent);
+      padding: 0.15rem 0.55rem;
+      border-radius: 4px;
+      margin-bottom: 0.6rem;
+    }
+
+    .agent-card p {
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* ── PIPELINE ──────────────────────────────────────── */
+    .pipeline {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .pipeline-step {
+      display: grid;
+      grid-template-columns: 36px 1fr auto;
+      align-items: center;
+      gap: 1rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.9rem 1.2rem;
+      text-decoration: none;
+      transition: border-color 0.2s;
+    }
+
+    .pipeline-step:hover { border-color: var(--accent); }
+
+    .pipeline-step .num {
+      width: 32px;
+      height: 32px;
+      background: rgba(88,166,255,0.1);
+      border: 1px solid rgba(88,166,255,0.3);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .pipeline-step .info h4 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .pipeline-step .info p {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .pipeline-step .tag {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    .tag-orchestrator { background: rgba(188,140,255,0.15); color: var(--purple); }
+    .tag-subagent     { background: rgba(63,185,80,0.15);  color: var(--green); }
+    .tag-tool         { background: rgba(255,166,87,0.15); color: var(--orange); }
+
+    /* ── CODE BLOCK ────────────────────────────────────── */
+    .code-block {
+      background: var(--dark);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .code-block .code-header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 0.6rem 1.2rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .code-block .code-header::before {
+      content: "";
+      display: inline-block;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    .code-block pre {
+      padding: 1.4rem 1.6rem;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      line-height: 1.7;
+      color: #e6edf3;
+    }
+
+    .code-block .c  { color: var(--muted); }
+    .code-block .kw { color: var(--purple); }
+    .code-block .st { color: var(--orange); }
+    .code-block .cm { color: var(--green); }
+
+    /* ── STACK ─────────────────────────────────────────── */
+    .stack-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 0.8rem;
+    }
+
+    .stack-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .stack-item .icon { font-size: 1.4rem; }
+
+    .stack-item .label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .stack-item .sublabel {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    /* ── FOOTER ────────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    footer a { color: var(--accent); text-decoration: none; }
+
+    @media (max-width: 600px) {
+      nav .links { display: none; }
+      .hero { padding: 4rem 1.5rem 3rem; }
+      .pipeline-step { grid-template-columns: 36px 1fr; }
+      .pipeline-step .tag { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="logo" href="#">Viral Moment Hijacker</a>
+  <ul class="links">
+    <li><a href="#agents">Agents</a></li>
+    <li><a href="#pipeline">Pipeline</a></li>
+    <li><a href="#quickstart">Quick Start</a></li>
+    <li><a href="https://github.com/am-claudia/viral-moment-hijacker-agent" target="_blank">GitHub</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="badge">⚡ Multi-Agent AI System</div>
+  <h1>Viral Moment Hijacker</h1>
+  <p>Monitor what's going viral in any industry, identify the right creators, write personalized outreach, publish a reactive brand post, and email your customers — all from a single command.</p>
+  <div class="hero-buttons">
+    <a href="https://github.com/am-claudia/viral-moment-hijacker-agent" class="btn-primary" target="_blank">View on GitHub</a>
+    <a href="#pipeline" class="btn-secondary">See how it works</a>
+  </div>
+</div>
+
+<!-- AGENTS -->
+<section id="agents">
+  <h2>Multi-Agent Architecture</h2>
+  <p class="section-sub">One orchestrator coordinates three specialized sub-agents. Each has one job and the right model for it.</p>
+
+  <div class="agent-grid">
+    <div class="agent-card">
+      <div class="icon">🧠</div>
+      <h3>Orchestrator</h3>
+      <span class="model-pill">gemini-2.5-flash</span>
+      <p>Handles strategy, brand angle selection, DM pitches, brand post, and content calendar. Coordinates all sub-agents.</p>
+    </div>
+    <div class="agent-card">
+      <div class="icon">📈</div>
+      <h3>TrendResearchAgent</h3>
+      <span class="model-pill">gemini-2.5-flash</span>
+      <p>Scrapes live data from TikTok, Instagram, and LinkedIn via Apify. Returns ranked trends with opportunity scores.</p>
+    </div>
+    <div class="agent-card">
+      <div class="icon">🎯</div>
+      <h3>InfluencerAgent</h3>
+      <span class="model-pill">gemini-2.5-flash</span>
+      <p>Scrapes real creator profiles and scores each one on niche fit. Returns ranked matches with why_good_fit explanations.</p>
+    </div>
+    <div class="agent-card">
+      <div class="icon">✉️</div>
+      <h3>EmailAgent</h3>
+      <span class="model-pill">gemini-2.5-flash</span>
+      <p>Writes a complete customer email — subject, body, CTA — from trend context. Orchestrator never touches the copy.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PIPELINE -->
+<section id="pipeline">
+  <h2>10-Step Pipeline</h2>
+  <p class="section-sub">Each step links to full documentation covering inputs, outputs, and design decisions.</p>
+
+  <div class="pipeline">
+    <a href="agents/01_discover_trends.html" class="pipeline-step">
+      <div class="num">01</div>
+      <div class="info"><h4>Discover Trends</h4><p>Scrape live trending content from TikTok / Instagram / LinkedIn</p></div>
+      <span class="tag tag-subagent">TrendResearchAgent</span>
+    </a>
+    <a href="agents/02_identify_influencers.html" class="pipeline-step">
+      <div class="num">02</div>
+      <div class="info"><h4>Identify Influencers</h4><p>Score real creator profiles for niche fit and engagement quality</p></div>
+      <span class="tag tag-subagent">InfluencerAgent</span>
+    </a>
+    <a href="agents/03_strategize.html" class="pipeline-step">
+      <div class="num">03</div>
+      <div class="info"><h4>Strategize</h4><p>Pick the most authentic brand angle for the chosen trend</p></div>
+      <span class="tag tag-orchestrator">Orchestrator</span>
+    </a>
+    <a href="agents/04_hashtag_strategy.html" class="pipeline-step">
+      <div class="num">04</div>
+      <div class="info"><h4>Hashtag Strategy</h4><p>Generate grouped hashtags: broad / niche / branded / trend</p></div>
+      <span class="tag tag-orchestrator">Orchestrator</span>
+    </a>
+    <a href="agents/05_personalize_dms.html" class="pipeline-step">
+      <div class="num">05</div>
+      <div class="info"><h4>Personalize DMs</h4><p>Write a custom pitch per creator using their actual content style</p></div>
+      <span class="tag tag-orchestrator">Orchestrator</span>
+    </a>
+    <a href="agents/06_create_brand_post.html" class="pipeline-step">
+      <div class="num">06</div>
+      <div class="info"><h4>Create Brand Post</h4><p>Write a reactive post in the brand's voice for the target platform</p></div>
+      <span class="tag tag-orchestrator">Orchestrator</span>
+    </a>
+    <a href="agents/07_content_calendar.html" class="pipeline-step">
+      <div class="num">07</div>
+      <div class="info"><h4>Content Calendar</h4><p>Build a 7-day plan — Day 1 jumps on trend, Days 6–7 convert</p></div>
+      <span class="tag tag-orchestrator">Orchestrator</span>
+    </a>
+    <a href="agents/08_post_social_media.html" class="pipeline-step">
+      <div class="num">08</div>
+      <div class="info"><h4>Post to Social Media</h4><p>Publish the brand post to the brand's social account</p></div>
+      <span class="tag tag-tool">Simulated</span>
+    </a>
+    <a href="agents/09_customer_email.html" class="pipeline-step">
+      <div class="num">09</div>
+      <div class="info"><h4>Send Customer Email</h4><p>Write and send a trend-inspired email to the subscriber list</p></div>
+      <span class="tag tag-subagent">EmailAgent</span>
+    </a>
+    <a href="agents/10_save_campaign.html" class="pipeline-step">
+      <div class="num">10</div>
+      <div class="info"><h4>Save Campaign</h4><p>Write the full campaign package to output/ as timestamped JSON</p></div>
+      <span class="tag tag-tool">Python</span>
+    </a>
+  </div>
+</section>
+
+<!-- QUICK START -->
+<section id="quickstart">
+  <h2>Quick Start</h2>
+  <p class="section-sub">Two API keys, one command.</p>
+
+  <div class="code-block">
+    <div class="code-header">bash</div>
+    <pre><span class="c"># Install dependencies</span>
+pip install -r requirements.txt
+
+<span class="c"># Add your API keys</span>
+cp .env.example .env
+<span class="c"># GEMINI_API_KEY  → aistudio.google.com (free)</span>
+<span class="c"># APIFY_API_TOKEN → apify.com (free tier)</span>
+
+<span class="c"># Run a campaign</span>
+python main.py \
+  --industry food \
+  --brand-name <span class="st">"Forkly"</span> \
+  --brand-description <span class="st">"Fun meal kit brand for millennials and Gen Z"</span> \
+  --platform TikTok \
+  --tone <span class="st">"casual, witty"</span></pre>
+  </div>
+</section>
+
+<!-- TECH STACK -->
+<section>
+  <h2>Tech Stack</h2>
+  <p class="section-sub">Built entirely in Python with open APIs.</p>
+
+  <div class="stack-grid">
+    <div class="stack-item">
+      <div class="icon">🤖</div>
+      <div><div class="label">Google Gemini</div><div class="sublabel">All agents</div></div>
+    </div>
+    <div class="stack-item">
+      <div class="icon">🕷️</div>
+      <div><div class="label">Apify</div><div class="sublabel">Live scraping</div></div>
+    </div>
+    <div class="stack-item">
+      <div class="icon">🐍</div>
+      <div><div class="label">Python 3.11+</div><div class="sublabel">Core runtime</div></div>
+    </div>
+    <div class="stack-item">
+      <div class="icon">🖥️</div>
+      <div><div class="label">Rich</div><div class="sublabel">Terminal UI</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  Built for Agentic AI Systems — IE University &nbsp;·&nbsp;
+  <a href="https://github.com/am-claudia/viral-moment-hijacker-agent" target="_blank">GitHub</a>
+</footer>
+
+</body>
+</html>

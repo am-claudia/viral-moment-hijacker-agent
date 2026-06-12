@@ -63,7 +63,7 @@
   .meta-row span b{color:var(--accent);font-weight:700}
 
   /* table of contents */
-  .toc{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:26px}
+  .toc{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:26px}
   .toc a{display:block;border:1.5px solid var(--ink);border-radius:8px;padding:10px 12px;text-decoration:none;color:var(--ink);background:var(--panel)}
   .toc a:hover{background:var(--accent-soft)}
   .toc .n{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--accent);font-weight:700;display:block}
@@ -168,6 +168,16 @@
   .ind-name{font-weight:700;font-size:.82rem;margin-bottom:3px}
   .ind-note{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--muted);line-height:1.4}
 
+  /* github callout */
+  .gh-callout{border:2.5px solid var(--ink);border-radius:12px;background:var(--ink);color:var(--paper);padding:22px 26px;margin-top:40px;margin-bottom:36px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+  .gh-callout .gh-body{flex:1;min-width:200px}
+  .gh-callout .gh-eyebrow{font-family:'JetBrains Mono',monospace;font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:5px}
+  .gh-callout .gh-title{font-family:'Anton',sans-serif;font-size:1.35rem;text-transform:uppercase;letter-spacing:.5px;line-height:1.05;margin-bottom:5px}
+  .gh-callout .gh-sub{font-size:.85rem;color:#B0ADA5;line-height:1.5}
+  .gh-link{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;font-family:'JetBrains Mono',monospace;font-size:.75rem;font-weight:700;letter-spacing:.05em;padding:11px 18px;border-radius:8px;text-decoration:none;white-space:nowrap;flex-shrink:0}
+  .gh-link:hover{background:#E03C20}
+  .gh-link .arr{font-size:1rem;font-weight:900}
+
   @media print{
     body{background:#fff}
     .page{padding:0;max-width:none}
@@ -175,6 +185,7 @@
     .term,.grid2,.arch,.stat-row,.quote{break-inside:avoid}
     a{color:inherit;text-decoration:none}
     .toc a:hover{background:var(--panel)}
+    .gh-callout{background:#111;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   }
   @media (max-width:680px){
     .grid2{grid-template-columns:1fr}
@@ -187,6 +198,8 @@
     .flow-h{flex-direction:column}
     .fh-arrow{align-self:center;padding-top:0;font-size:1.2rem}
     .ind{width:calc(50% - 5px)}
+    .gh-callout{flex-direction:column;align-items:flex-start}
+    .gh-link{width:100%;justify-content:center}
   }
   @media (prefers-reduced-motion:no-preference){
     header .cmd b{animation:blink 1.2s steps(1) infinite}
@@ -207,7 +220,7 @@
 
 <!-- ════════ HEADER ════════ -->
 <header>
-  <div class="cmd">forkly@marketing:~$ python main.py<b>▌</b></div>
+  <div class="cmd">viral-moment-hijacker:~$ python main.py<b>▌</b></div>
   <div class="eyebrow">AI Agent for Marketing · Group 2 · Gemini API</div>
   <h1 class="display">Viral Moment<br><span class="hi">Hijacker</span></h1>
   <p class="subtitle">A <b>multi-agent marketing system</b> that catches a viral trend, recruits the right creators, and ships a <span class="hl">full reactive campaign</span> before the moment passes.</p>
@@ -220,10 +233,23 @@
     <a href="#brief"><span class="n">01</span><span class="t">Concept Brief</span></a>
     <a href="#workflow"><span class="n">02</span><span class="t">How It Works</span></a>
     <a href="#spec"><span class="n">03</span><span class="t">Technical Design</span></a>
-    <a href="#demo"><span class="n">04</span><span class="t">Forkly Demo Run</span></a>
-    <a href="#reflection"><span class="n">05</span><span class="t">Reflection</span></a>
+    <a href="#run"><span class="n">04</span><span class="t">How to Run It</span></a>
+    <a href="#demo"><span class="n">05</span><span class="t">Forkly Demo Run</span></a>
+    <a href="#reflection"><span class="n">06</span><span class="t">Reflection</span></a>
   </nav>
 </header>
+
+<!-- ════════ GITHUB CALLOUT ════════ -->
+<div class="gh-callout">
+  <div class="gh-body">
+    <div class="gh-eyebrow">Source Code · Open Repository</div>
+    <div class="gh-title">Full Project Available on GitHub</div>
+    <div class="gh-sub">All source files, sub-agent implementations, and commit history are public. Clone the repo and follow the setup guide in section 04 to run the agent yourself.</div>
+  </div>
+  <a class="gh-link" href="https://github.com/am-claudia/viral-moment-hijacker-agent" target="_blank">
+    Click here to access the full repo <span class="arr">→</span>
+  </a>
+</div>
 
 <!-- ════════ 01 CONCEPT BRIEF ════════ -->
 <section id="brief">
@@ -464,10 +490,150 @@ trend_name, trend_summary, and brand_angle.
   </ul>
 </section>
 
-<!-- ════════ 04 FORKLY DEMO ════════ -->
+<!-- ════════ 04 HOW TO RUN ════════ -->
+<section id="run" class="pagebreak">
+  <div class="eyebrow">Appendix · Setup Guide</div>
+  <h2 class="display"><span class="num">04</span>How to Run It</h2>
+  <p class="section-sub">Everything you need to go from a fresh clone to a running campaign. Takes about <b>5 minutes to set up</b>.</p>
+
+  <h3><span class="tick">▸</span> Prerequisites</h3>
+  <div class="term">
+    <div class="term-bar">
+      <div class="dots"><span class="dot fill"></span><span class="dot"></span><span class="dot"></span></div>
+      <span class="title">requirements</span>
+    </div>
+    <div class="term-body">
+      <ul class="pipe">
+        <li><span class="n">1</span><span class="step">Python</span><span class="desc">Version <b>3.11 or higher</b>. Check with <span class="mono">python --version</span>.</span></li>
+        <li><span class="n">2</span><span class="step">Gemini key</span><span class="desc">Free at <b>aistudio.google.com</b> → Get API key → Create API key.</span></li>
+        <li><span class="n">3</span><span class="step">Apify token</span><span class="desc">Free tier at <b>apify.com</b> → Settings → Integrations → Personal API tokens. Starts with <span class="mono">apify_api_...</span></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="quote">
+    <div class="who">⚠ Apify free tier · credit limit</div>
+    The Apify free plan includes <b>$5 of compute credits per month</b>. Each full agent run (trend scrape + influencer scrape) consumes approximately <b>$0.25 in credits</b>, which gives you <span class="hl">roughly 20 full pipeline runs</span> per month before hitting the limit. Running the core pipeline only (without <span class="mono">--find-influencers</span>) cuts that cost roughly in half. Credits reset monthly. If you hit the limit, Apify will pause the run and return an error — just wait for the next billing cycle or upgrade to a paid plan.
+  </div>
+
+  <h3><span class="tick">▸</span> Installation</h3>
+  <div class="term dark">
+    <div class="term-bar">
+      <div class="dots"><span class="dot fill"></span><span class="dot"></span><span class="dot"></span></div>
+      <span class="title">terminal · one-time setup</span>
+    </div>
+    <div class="term-body">
+<pre><span class="c"># 1 · Clone the repo</span>
+git clone https://github.com/am-claudia/viral-moment-hijacker-agent
+cd viral-moment-hijacker-agent
+
+<span class="c"># 2 · Install Python dependencies</span>
+pip install -r requirements.txt
+
+<span class="c"># 3 · Create your .env file and add your keys</span>
+cp .env.example .env</pre>
+    </div>
+  </div>
+  <p>Open the <span class="mono">.env</span> file and fill in both keys:</p>
+  <div class="term dark">
+    <div class="term-bar">
+      <div class="dots"><span class="dot fill"></span><span class="dot"></span><span class="dot"></span></div>
+      <span class="title">.env</span>
+    </div>
+    <div class="term-body">
+<pre>GEMINI_API_KEY=<span class="a">gemini_api_...</span>
+APIFY_API_TOKEN=<span class="a">apify_api_...</span></pre>
+    </div>
+  </div>
+
+  <h3><span class="tick">▸</span> Run commands</h3>
+  <p>The agent accepts CLI flags to configure the campaign. <span class="hb">--find-influencers</span> and <span class="hb">--send-email</span> are optional — omit them for a faster, cheaper run that still produces the trend analysis and brand angle.</p>
+
+  <div class="term dark">
+    <div class="term-bar">
+      <div class="dots"><span class="dot fill"></span><span class="dot"></span><span class="dot"></span></div>
+      <span class="title">Forkly on TikTok · full pipeline (demo brand from this report)</span>
+    </div>
+    <div class="term-body">
+<pre>python main.py \
+  --industry food \
+  --brand-name "Forkly" \
+  --brand-description "Meal kits for people who'd rather laugh than meal-prep" \
+  --platform TikTok \
+  --tone "casual, witty, food-obsessed" \
+  --find-influencers \
+  --send-email</pre>
+    </div>
+  </div>
+
+  <div class="term dark">
+    <div class="term-bar">
+      <div class="dots"><span class="dot fill"></span><span class="dot"></span><span class="dot"></span></div>
+      <span class="title">fitness brand on Instagram · core pipeline only (saves ~half the Apify credits)</span>
+    </div>
+    <div class="term-body">
+<pre>python main.py \
+  --industry fitness \
+  --brand-name "ActiveWear Co" \
+  --brand-description "Sustainable activewear for everyday athletes" \
+  --platform Instagram \
+  --tone casual \
+  --brand-values "sustainability, performance, community"</pre>
+    </div>
+  </div>
+
+  <div class="term dark">
+    <div class="term-bar">
+      <div class="dots"><span class="dot fill"></span><span class="dot"></span><span class="dot"></span></div>
+      <span class="title">B2B startup on LinkedIn · full pipeline</span>
+    </div>
+    <div class="term-body">
+<pre>python main.py \
+  --industry fintech \
+  --brand-name "PayFlow" \
+  --brand-description "B2B payment processing startup for fast-growing companies" \
+  --platform LinkedIn \
+  --tone professional \
+  --brand-values "transparent, founder-friendly, no hidden fees" \
+  --find-influencers \
+  --send-email</pre>
+    </div>
+  </div>
+
+  <h3><span class="tick">▸</span> All available flags</h3>
+  <table>
+    <tr><th>Flag</th><th>Required</th><th>Description</th></tr>
+    <tr><td class="mono">--industry</td><td><span class="chip real">yes</span></td><td>Industry to monitor, e.g. <span class="mono">food</span>, <span class="mono">fitness</span>, <span class="mono">beauty</span>, <span class="mono">fintech</span></td></tr>
+    <tr><td class="mono">--brand-name</td><td><span class="chip real">yes</span></td><td>Your brand name</td></tr>
+    <tr><td class="mono">--brand-description</td><td><span class="chip real">yes</span></td><td>One sentence describing the brand and its audience</td></tr>
+    <tr><td class="mono">--platform</td><td><span class="chip real">yes</span></td><td><span class="mono">TikTok</span>, <span class="mono">Instagram</span>, or <span class="mono">LinkedIn</span></td></tr>
+    <tr><td class="mono">--tone</td><td><span class="chip sim">no</span></td><td>Brand voice, e.g. <span class="mono">casual</span>, <span class="mono">professional</span>, <span class="mono">witty</span>. Default: <span class="mono">casual</span></td></tr>
+    <tr><td class="mono">--brand-values</td><td><span class="chip sim">no</span></td><td>Comma-separated values. Default: <span class="mono">authentic, creative, community-driven</span></td></tr>
+    <tr><td class="mono">--find-influencers</td><td><span class="chip sim">no</span></td><td>Enable InfluencerAgent: scrape + score creators, write personalized DM pitches. Uses ~$0.12 extra in Apify credits.</td></tr>
+    <tr><td class="mono">--send-email</td><td><span class="chip sim">no</span></td><td>Enable EmailAgent: write a trend-inspired customer email and save a preview to <span class="mono">output/emails/</span>. No extra Apify cost.</td></tr>
+  </table>
+
+  <h3><span class="tick">▸</span> What you get in output/</h3>
+  <div class="term">
+    <div class="term-bar">
+      <div class="dots"><span class="dot fill"></span><span class="dot"></span><span class="dot"></span></div>
+      <span class="title">output/ directory after a run</span>
+    </div>
+    <div class="term-body">
+<pre>output/
+  campaigns/
+    campaign_forkly_20260612_143200.json   <span class="c"># full campaign: trend, angle, pitches, post</span>
+  emails/
+    email_20260612_143318.txt              <span class="c"># customer email preview (if --send-email)</span></pre>
+    </div>
+  </div>
+  <p>The JSON file is the complete campaign package. Open it to see the viral trend chosen, the brand angle reasoning, each influencer's fit score and DM pitch, and the brand post copy.</p>
+</section>
+
+<!-- ════════ 05 FORKLY DEMO ════════ -->
 <section id="demo" class="pagebreak">
   <div class="eyebrow">Deliverable 3</div>
-  <h2 class="display"><span class="num">04</span>Forkly Demo Run</h2>
+  <h2 class="display"><span class="num">05</span>Forkly Demo Run</h2>
   <p class="section-sub">A real run from <b>June 12, 2026</b> using the full multi-agent system. The Gemini 2.5 Flash orchestrator coordinated all three sub-agents, scraped live TikTok data via Apify, and produced the campaign below <b>without human input</b>.</p>
 
   <h3><span class="tick">▸</span> Sample input</h3>
@@ -525,10 +691,10 @@ trend_name, trend_summary, and brand_angle.
   <p><b>Is this useful for a marketing team?</b> Yes, with review. The trend was real and live, the angle was on-brand, and each DM referenced the creator's actual content style — the part teams find most time-consuming to do well. A marketer would <span class="key">edit and approve</span> rather than start from zero, which is exactly the time saving the agent promises.</p>
 </section>
 
-<!-- ════════ 05 REFLECTION ════════ -->
+<!-- ════════ 06 REFLECTION ════════ -->
 <section id="reflection" class="pagebreak">
   <div class="eyebrow">Deliverable 4</div>
-  <h2 class="display"><span class="num">05</span>Reflection</h2>
+  <h2 class="display"><span class="num">06</span>Reflection</h2>
   <p class="section-sub">A post-campaign retro: what ran clean, what threw warnings, and what we would patch next.</p>
 
   <h3><span class="tick">▸</span> What the agent does well</h3>

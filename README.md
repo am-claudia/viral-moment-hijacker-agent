@@ -1,6 +1,6 @@
 # Viral Moment Hijacker
 
-An AI agent that monitors what's going viral in any industry, identifies the right creators to partner with, writes personalized outreach, publishes a reactive brand post, and emails your customers — all from a single command.
+An AI agent that monitors what's going viral in any industry, identifies the right creators to partner with, writes personalized outreach, and emails your customers — all from a single command.
 
 ---
 
@@ -8,11 +8,11 @@ An AI agent that monitors what's going viral in any industry, identifies the rig
 
 When a trend blows up, the brands that win are the ones that respond within hours — not days. But the manual workflow is too slow: monitor platforms → find relevant creators → research each one → write personalized outreach → draft a post → notify your customers. By the time all of that is done, the moment has passed and the audience has moved on.
 
-This agent runs that entire workflow in one automated pipeline. It scrapes live trend data, evaluates real creator profiles, reasons about the right brand angle, and produces ready-to-use content — all driven by a Gemini Pro orchestrator that makes strategic decisions the same way a human strategist would.
+This agent runs that entire workflow in one automated pipeline. It scrapes live trend data, evaluates real creator profiles, reasons about the right brand angle, and produces ready-to-use content — all driven by a Gemini Flash orchestrator that makes strategic decisions the same way a human strategist would.
 
 **For marketers, this means:**
 - Catching viral moments in the same news cycle they happen
-- Getting a full campaign (influencer outreach + brand post + customer email + 7-day content calendar) in under 5 minutes
+- Getting a full campaign (brand angle + DM pitches + customer email) in under 5 minutes
 - Personalized DM pitches that reference each creator's actual content — not generic templates
 - A documented strategy with brand angle reasoning, not just generated copy
 
@@ -20,65 +20,59 @@ This agent runs that entire workflow in one automated pipeline. It scrapes live 
 
 ## How it works
 
+The pipeline has a core that always runs, plus two optional agents you enable with flags:
+
 ```
+Core (always active)
+──────────────────────────────────────────────────────────
 1. DISCOVER    Scrapes live trending content from your target platform via Apify
                TikTok, Instagram, or LinkedIn — real posts, real engagement numbers
 
-2. ANALYZE     TrendResearchAgent ranks the scraped data by opportunity score
-               and returns content angles, not just raw hashtags
-
-3. IDENTIFY    InfluencerAgent evaluates real creator profiles for niche fit
-               Returns scored matches with a "why good fit" explanation per creator
-
-4. STRATEGIZE  Orchestrator picks the brand angle that fits most authentically
+2. STRATEGIZE  Orchestrator picks the brand angle that fits most authentically
                Flags it if the connection feels forced — won't produce dishonest copy
 
-5. HASHTAGS    Generates a grouped strategy: broad reach + niche + branded + trend-specific
-               Includes a caption formula showing how to mix the groups per post
+3. SAVE        Writes the complete campaign package to output/ as a timestamped JSON
 
-6. PERSONALIZE Writes a custom DM pitch per creator using their content style,
+With --find-influencers
+──────────────────────────────────────────────────────────
+4. IDENTIFY    InfluencerAgent evaluates real creator profiles for niche fit
+               Returns scored matches with a "why good fit" explanation per creator
+
+5. PERSONALIZE Writes a custom DM pitch per creator using their content style,
                engagement pattern, and most recent trend-related post
 
-7. CREATE      Drafts a reactive brand post in your brand's voice,
-               formatted for the target platform's native style
-
-8. CALENDAR    Produces a 7-day content plan: day 1 jumps on the trend,
-               days 2–5 sustain it, days 6–7 convert with a CTA
-
-9. POST        Publishes the brand post to your social media account
-
-10. EMAIL      EmailAgent writes a full customer email connecting the trend to
+With --send-email
+──────────────────────────────────────────────────────────
+6. EMAIL       EmailAgent writes a full customer email connecting the trend to
                a specific product recommendation, then sends it to your list
-
-11. SAVE       Writes the complete campaign package to output/ as a timestamped JSON
 ```
 
 ---
 
 ## Multi-agent architecture
 
-The agent is built as an orchestrator that coordinates three specialized sub-agents. Each sub-agent is its own Gemini API call with a focused system prompt and the right model for its job.
+The agent is built as an orchestrator that coordinates up to two specialized sub-agents. Each sub-agent is its own Gemini API call with a focused system prompt. Only the agents enabled by CLI flags are wired into the pipeline.
 
 ```
-Gemini 2.5 Pro (Orchestrator)
-    Handles: strategy, brand angle, DM pitches, brand post, content calendar
+gemini-2.5-flash (Orchestrator)
+    Handles: strategy, brand angle, DM pitches
     │
     ├── search_viral_trends  →  TrendResearchAgent  (gemini-2.5-flash)
-    │                           Scrapes Apify live data, then analyzes and ranks
-    │                           trends by opportunity score + suggests content angles
+    │                           Always active. Scrapes Apify live data, then analyzes
+    │                           and ranks trends by opportunity score + content angles.
     │
-    ├── find_influencers     →  InfluencerAgent     (gemini-2.5-flash)
+    ├── find_influencers     →  InfluencerAgent     (gemini-2.5-flash)   [--find-influencers]
     │                           Scrapes Apify creator profiles, scores each on
-    │                           niche fit, returns ranked matches with why_good_fit
+    │                           niche fit, returns ranked matches with why_good_fit.
     │
-    └── send_customer_email  →  EmailAgent          (gemini-2.5-pro)
+    └── send_customer_email  →  EmailAgent          (gemini-2.5-flash)   [--send-email]
                                 Writes the full email (subject, body, CTA)
-                                from trend context, then simulates sending
+                                from trend context, then simulates sending.
 ```
 
-The orchestrator never writes the email itself — it delegates to the EmailAgent with just the trend name, trend summary, and brand angle. The EmailAgent handles all copywriting. Same pattern for trends and influencers: the orchestrator receives analyzed reports, not raw scraped data, so it can focus on strategy.
+**How the orchestrator's tools are built dynamically:** `_build_tools()` in `src/agent.py` only exposes tools for enabled agents. Without `--find-influencers`, the orchestrator never receives `find_influencers` as an available function, so it focuses entirely on trend strategy and brand angle. The system prompt is also generated dynamically — numbered steps only include the active agents.
 
-**Why this matters:** Each agent has one job and the right model for it. Flash is fast and cheap for structured data analysis. Pro handles the multi-step strategic reasoning and creative writing that ties everything together.
+**Why this matters:** Each agent has one focused job and the right model for it. Flash handles everything — it's fast, cheap, and capable enough for structured data analysis, creative writing, and multi-step strategy all in one.
 
 ---
 
@@ -90,27 +84,15 @@ viral-moment-hijacker-agent/
 ├── src/
 │   ├── agent.py             Orchestrator — system prompt, agentic loop, tool dispatch
 │   ├── tools.py             Tool schemas + dispatcher (delegates to sub-agents)
-│   ├── config.py            Model constants for orchestrator + all 3 sub-agents
+│   ├── config.py            Model constants for orchestrator + all sub-agents
 │   └── agents/
 │       ├── trend_agent.py       TrendResearchAgent — scrape + analyze trends
 │       ├── influencer_agent.py  InfluencerAgent — scrape + score creators
 │       └── email_agent.py       EmailAgent — write + send customer email
-├── docs/agents/             Per-step documentation for each pipeline task
-│   ├── 00_orchestrator.md       Orchestrator design, agentic loop, system prompt
-│   ├── 01_discover_trends.md    Step 1: search_viral_trends + TrendResearchAgent
-│   ├── 02_identify_influencers.md   Step 2: find_influencers + InfluencerAgent
-│   ├── 03_strategize.md         Step 3: brand angle selection (pure reasoning)
-│   ├── 04_hashtag_strategy.md   Step 4: generate_hashtag_strategy
-│   ├── 05_personalize_dms.md    Step 5: DM pitch writing (pure reasoning)
-│   ├── 06_create_brand_post.md  Step 6: brand post creation (pure reasoning)
-│   ├── 07_content_calendar.md   Step 7: generate_content_calendar
-│   ├── 08_post_social_media.md  Step 8: post_to_social_media (simulated)
-│   ├── 09_customer_email.md     Step 9: send_customer_email + EmailAgent
-│   └── 10_save_campaign.md      Step 10: save_campaign_results
 ├── output/
 │   ├── campaigns/           Full campaign JSON, one file per run
-│   ├── calendars/           7-day content calendar as plain text
-│   ├── hashtags/            Hashtag strategy as plain text
+│   ├── calendars/           7-day content calendar as plain text (if generated)
+│   ├── hashtags/            Hashtag strategy as plain text (if generated)
 │   └── emails/              Customer email previews as plain text
 ├── .env                     Your API keys (never commit this)
 ├── .env.example             Template showing which keys are needed
@@ -151,7 +133,7 @@ Then open `.env` and fill in your keys. Instructions for each key are in the nex
 
 ### Google Gemini (required)
 
-Powers all Gemini models in the pipeline (2.5 Pro and 2.5 Flash).
+Powers all Gemini models in the pipeline (gemini-2.5-flash throughout).
 
 1. Go to [aistudio.google.com](https://aistudio.google.com)
 2. Sign in → click **Get API key** → **Create API key**
@@ -188,7 +170,7 @@ APIFY_API_TOKEN=apify_api_...
 
 ## Running the agent
 
-### Fitness brand on Instagram
+### Core pipeline only — trend + brand angle
 
 ```bash
 python main.py \
@@ -196,22 +178,22 @@ python main.py \
   --brand-name "ActiveWear Co" \
   --brand-description "Sustainable activewear for everyday athletes" \
   --platform Instagram \
-  --tone casual \
-  --brand-values "sustainability, performance, community"
+  --tone casual
 ```
 
-### Food brand on TikTok
+### Add influencer outreach
 
 ```bash
 python main.py \
   --industry food \
-  --brand-name "YourBrand" \
-  --brand-description "One sentence describing what your brand does and who it's for" \
+  --brand-name "Forkly" \
+  --brand-description "Fun meal kit brand delivering weekly recipe kits to millennials and Gen Z" \
   --platform TikTok \
-  --tone "casual, witty, food-obsessed"
+  --tone "casual, witty, food-obsessed" \
+  --find-influencers
 ```
 
-### B2B startup on LinkedIn
+### Full pipeline — trends + influencers + customer email
 
 ```bash
 python main.py \
@@ -220,7 +202,9 @@ python main.py \
   --brand-description "B2B payment processing startup for fast-growing companies" \
   --platform LinkedIn \
   --tone professional \
-  --brand-values "transparent, founder-friendly, no hidden fees"
+  --brand-values "transparent, founder-friendly, no hidden fees" \
+  --find-influencers \
+  --send-email
 ```
 
 ### All CLI flags
@@ -233,12 +217,14 @@ python main.py \
 | `--platform` | Yes | `TikTok`, `Instagram`, or `LinkedIn` |
 | `--tone` | No | Brand voice, default: `casual` |
 | `--brand-values` | No | Comma-separated values, default: `authentic, creative, community-driven` |
+| `--find-influencers` | No | Enable InfluencerAgent: find and score creators, then write personalized DM pitches |
+| `--send-email` | No | Enable EmailAgent: write and send a trend-inspired customer email |
 
 ---
 
 ## What to expect when it runs
 
-The terminal shows each step as it executes, including which sub-agent is running:
+The terminal shows each step as it executes, including which sub-agents are active:
 
 ```
 ╭─────────────────────────────────────────────╮
@@ -251,6 +237,7 @@ Campaign Configuration
   Industry: fitness
   Platform: Instagram
   Tone:     casual
+  Agents:   TrendResearchAgent, InfluencerAgent, EmailAgent
 
 ── Starting Pipeline ──────────────────────────────────
 
@@ -266,16 +253,7 @@ Gemini is reasoning... (step 1)
   Executing find_influencers...        ← InfluencerAgent scrapes + scores creators
   ✓ Done
 
-Gemini is reasoning... (step 3)        ← Orchestrator picks brand angle + writes DMs + post
-
-→ Tool: generate_hashtag_strategy
-  ✓ Done
-
-→ Tool: generate_content_calendar
-  ✓ Done
-
-→ Tool: post_to_social_media
-  ✓ Done
+Gemini is reasoning... (step 3)        ← Orchestrator picks brand angle + writes DM pitches
 
 → Tool: send_customer_email
   { "trend_name": "25-Day Gym Streak", ... }
@@ -305,23 +283,11 @@ Gemini is reasoning... (step 3)        ← Orchestrator picks brand angle + writ
 │ reel are exactly the kind of content...             │
 ╰─────────────────────────────────────────────────────╯
 
-╭─ Hashtag Strategy ──────────────────────────────────╮
-│ Broad:   #fitness #gym #workout                     │
-│ Niche:   #gymstreak #fitnessjourney #activewear     │
-│ Brand:   #ActiveWearCo                              │
-│ Trend:   #25DayStreak #StreakChallenge              │
-╰─────────────────────────────────────────────────────╯
-
-╭─ 7-Day Content Calendar ────────────────────────────╮
-│ Day 1     Reel        6:00 PM   Day 25 looks diff…  │
-│ Day 2     Story       9:00 AM   Behind the streak…  │
-│ ...                                                 │
-╰─────────────────────────────────────────────────────╯
-
 Distribution
-  ✓ Posted to Instagram: https://www.instagram.com/p/abc123/
   ✓ Email sent to 18,400 subscribers: "Your streak deserves gear that keeps up"
 ```
+
+The `Agents:` line in Campaign Configuration shows which agents are active for this run.
 
 **Total runtime: 2–5 minutes.** Most of the time is Apify scraping (~30–60s per step).
 
@@ -353,26 +319,50 @@ The complete campaign package:
   ],
   "brand_post": "Day 25 looks different in every body. Same gear. 🌱 #GymStreak #ActiveWearCo",
   "distribution": {
-    "social_post_url": "https://www.instagram.com/p/abc123/",
+    "social_post_url": null,
     "customer_email_subject": "Your streak deserves gear that keeps up",
     "customer_email_subscribers": 18400
   },
-  "content_calendar": [...],
-  "hashtag_strategy": { "groups": { "broad": [...], "niche": [...], "branded": [...], "trend": [...] } }
+  "content_calendar": [],
+  "hashtag_strategy": {}
 }
 ```
 
-### `output/calendars/calendar_<brand>_<timestamp>.txt`
-
-The 7-day posting plan as readable plain text.
-
-### `output/hashtags/hashtags_<brand>_<timestamp>.txt`
-
-All hashtag groups and the caption formula.
+`influencer_pitches` and `distribution.customer_email_*` are only populated when `--find-influencers` and `--send-email` are passed, respectively.
 
 ### `output/emails/email_<timestamp>.txt`
 
-The full customer email the EmailAgent wrote, saved as plain text.
+The full customer email the EmailAgent wrote, saved as plain text. Only created when `--send-email` is active.
+
+---
+
+## Standalone agent testing
+
+Each sub-agent can be run directly for testing without going through the full pipeline:
+
+```bash
+# Test TrendResearchAgent
+python -m src.agents.trend_agent \
+  --industry fitness \
+  --platform Instagram \
+  --timeframe "last 24 hours"
+
+# Test InfluencerAgent
+python -m src.agents.influencer_agent \
+  --trend "#gymstreak" \
+  --platform TikTok \
+  --niche "fitness motivation" \
+  --count 3
+
+# Test EmailAgent
+python -m src.agents.email_agent \
+  --trend-name "25-Day Gym Streak" \
+  --trend-summary "Fitness creators documenting unbroken 25-day streaks..." \
+  --brand-angle "Be the gear that makes the streak sustainable" \
+  --brand-name "ActiveWear Co" \
+  --brand-description "Sustainable activewear for everyday athletes" \
+  --tone casual
+```
 
 ---
 
@@ -382,12 +372,11 @@ The full customer email the EmailAgent wrote, saved as plain text.
 |---|---|---|
 | Trend discovery | **Real** | Live data scraped from TikTok / Instagram / LinkedIn via Apify |
 | Influencer profiles | **Real** | Scraped live — real follower counts, bios, recent posts |
-| Strategy, DMs, brand post | **Real** | Gemini Pro reasons through all of it |
+| Strategy, DMs, brand angle | **Real** | Gemini Flash reasons through all of it |
 | Customer email | **Real** | EmailAgent writes original copy from your brand context |
-| Publishing to social media | **Simulated** | Returns a fake post URL; no platform account needed |
 | Sending the customer email | **Simulated** | Saves a preview to `output/emails/`; no email provider needed |
 
-Publishing and email sending are simulated because real APIs (Instagram Graph API, TikTok Business API, Klaviyo, Mailchimp) require business accounts and OAuth verification that aren't practical for a demo environment. In production, you'd replace the simulation blocks in `src/tools.py` and `src/agents/email_agent.py` with real API calls — the rest of the pipeline stays identical.
+Email sending is simulated because real APIs (Klaviyo, Mailchimp, SendGrid) require business accounts and API setup that aren't practical for a demo. In production, replace the simulation block in `src/agents/email_agent.py` with a real API call — the email content is already written by the agent, just pass it to the provider.
 
 ---
 
@@ -403,7 +392,7 @@ Add your Apify token to `.env`. See the API keys section above.
 Run `pip install -r requirements.txt`.
 
 **Agent stops mid-run with a billing error**  
-Check your Google AI Studio quota at [aistudio.google.com](https://aistudio.google.com). A full campaign run uses Gemini 2.5 Pro (orchestrator + email) and 2.5 Flash (trends + influencers).
+Check your Google AI Studio quota at [aistudio.google.com](https://aistudio.google.com). A full campaign run uses gemini-2.5-flash for all steps.
 
 **Apify run hangs for more than 2 minutes**  
 Apify occasionally has slow cold starts. Cancel and re-run — the second attempt is usually fast.

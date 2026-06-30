@@ -55,7 +55,7 @@ def display_campaign(campaign: dict, platform: str) -> None:
     trend_summary = campaign.get("trend_summary", "")
     pitches = campaign.get("influencer_pitches", [])
     distribution = campaign.get("distribution", {})
-    email_subs = distribution.get("customer_email_subscribers", 0)
+    email_subs = distribution.get("customer_email_subscribers") or 0
 
     # Top metrics
     col1, col2, col3 = st.columns(3)

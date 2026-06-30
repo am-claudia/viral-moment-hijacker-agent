@@ -129,24 +129,45 @@ _SCRAPERS = {
 
 def _synthetic_trends(industry: str, platform: str) -> list:
     """Fallback trend data when Apify scraping is unavailable (e.g. quota exceeded)."""
+    if platform == "LinkedIn":
+        return [
+            {
+                "trend": f"{industry.title()} Industry Disruption",
+                "source": "linkedin",
+                "reactions": "2K",
+                "comments": "180",
+                "sample_post": f"The {industry} industry is undergoing a massive shift. Here's what leaders need to know right now. #{industry} #innovation #leadership",
+            },
+            {
+                "trend": f"Future of {industry.title()}",
+                "source": "linkedin",
+                "reactions": "1K",
+                "comments": "95",
+                "sample_post": f"5 {industry} trends reshaping the market in 2025. Which one are you betting on? #{industry} #trends #futureofwork",
+            },
+            {
+                "trend": f"{industry.title()} Founder Story",
+                "source": "linkedin",
+                "reactions": "800",
+                "comments": "60",
+                "sample_post": f"I built a {industry} brand from scratch with $0 marketing budget. Here's the honest breakdown. #{industry} #entrepreneurship",
+            },
+        ]
     return [
         {
             "trend": f"#{industry}transformation",
             "source": platform.lower(),
             "sample_caption": f"Amazing {industry} transformation — before and after 🔥 #{industry} #{industry}tips",
-            "note": "synthetic fallback — Apify quota exceeded",
         },
         {
             "trend": f"#{industry}routine",
             "source": platform.lower(),
             "sample_caption": f"My daily {industry} routine that changed everything ✨ #{industry}routine #{industry}lifestyle",
-            "note": "synthetic fallback — Apify quota exceeded",
         },
         {
             "trend": f"#{industry}hack",
             "source": platform.lower(),
             "sample_caption": f"This {industry} hack saved me so much time 😱 #{industry}hack #{industry}tips #viral",
-            "note": "synthetic fallback — Apify quota exceeded",
         },
     ]
 

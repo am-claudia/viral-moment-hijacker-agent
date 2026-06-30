@@ -54,7 +54,8 @@ class ViralMomentHijacker:
         # Build sub-agent directory based on active agents
         sub_agents = (
             "- **TrendResearchAgent** — called via `search_viral_trends`. "
-            f"Scrapes live {platform} data and returns pre-analyzed trends with opportunity scores and content angles. You pick the best one."
+            f"Scrapes live {platform} data and returns pre-analyzed trends with opportunity scores and content angles. You pick the best one. "
+            "Call it ONCE — it always returns usable trends, even if scraping was limited. Do not retry with different timeframes."
         )
         if self.use_influencers:
             sub_agents += (

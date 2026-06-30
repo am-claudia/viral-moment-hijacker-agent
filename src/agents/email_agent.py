@@ -58,7 +58,7 @@ def run_email_agent(
                 "- cta_text: button text like 'Add to my next kit' or 'Shop the look'\n"
                 "- trend_connection: one sentence explaining how the email ties to the viral moment"
             ),
-            max_output_tokens=1024,
+            max_output_tokens=4096,
         ),
     )
 

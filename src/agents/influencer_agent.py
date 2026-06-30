@@ -111,7 +111,7 @@ def run_influencer_agent(trend: str, platform: str, niche: str, count: int = 3) 
                 "- recent_trend_post: first 150 chars of their trend post (copy from input)\n\n"
                 f'Return ONLY valid JSON: {{"trend": "...", "platform": "...", "niche": "...", "influencers": [top {count}]}}'
             ),
-            max_output_tokens=1024,
+            max_output_tokens=4096,
         ),
     )
 

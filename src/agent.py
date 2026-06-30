@@ -210,11 +210,16 @@ Run a campaign on {platform} in the {industry} space. Follow these steps in orde
 
                 self.console.print(f"  [green]✓ Done[/green]")
 
+                try:
+                    response_payload = json.loads(result)
+                except (json.JSONDecodeError, TypeError):
+                    response_payload = {"result": result}
+
                 function_response_parts.append(
                     types.Part(
                         function_response=types.FunctionResponse(
                             name=tool_name,
-                            response={"result": result},
+                            response=response_payload,
                         )
                     )
                 )

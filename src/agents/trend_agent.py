@@ -163,7 +163,7 @@ def run_trend_agent(industry: str, timeframe: str, platform: str) -> str:
                 "- content_angle: one sentence on how a brand could join this conversation authentically\n\n"
                 f'Return ONLY valid JSON: {{"industry": "...", "platform": "...", "timeframe": "...", "top_trends": [...]}}'
             ),
-            max_output_tokens=1024,
+            max_output_tokens=4096,
         ),
     )
 
